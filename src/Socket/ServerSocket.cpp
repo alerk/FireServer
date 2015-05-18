@@ -1,6 +1,6 @@
 // Implementation of the ServerSocket class
-#include "Socket/ServerSocket.h"
-#include "Socket/SocketException.h"
+#include "ServerSocket.h"
+#include "SocketException.h"
 ServerSocket::ServerSocket ( int port )
 {
 	if ( ! Socket::create() )

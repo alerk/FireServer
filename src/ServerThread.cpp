@@ -7,9 +7,11 @@
 
 #include "ServerThread.h"
 #include "Socket/ServerSocket.h"
+#include "Socket/SocketException.h"
 #include <iostream>
+#include <unistd.h>
 #define SERVER_PORT 13579
-static void run(void* arg);
+static void* run(void* arg);
 static bool hasFire = false;
 ServerThread::ServerThread() {
 	// TODO Auto-generated constructor stub
@@ -21,7 +23,7 @@ ServerThread::~ServerThread() {
 }
 
 void ServerThread::startServerThread() {
-	if( pthread_create(&serverThread,NULL,&run,(void*)this)!=0)
+	if( pthread_create(&serverThread,NULL,run,(void*)this)!=0)
 	{
 		std::cout << "Fail to create serverThread" << std::endl;
 	}
@@ -34,7 +36,7 @@ void ServerThread::joinServerThread() {
 	pthread_join(serverThread, NULL);
 }
 
-static void run(void* arg)
+static void* run(void* arg)
 {
 	ServerThread* obj = (ServerThread*)arg;
 	try{
@@ -58,22 +60,21 @@ static void run(void* arg)
 					{
 						buffer[4] = 0x00;
 					}
-					sendToSocket >> buffer;
+					sendToSocket << buffer;
 
-
-				}catch(SocketException& e)
-				{
-					std::cout << "Error while accepting client " << e.description() << std::endl;
 
 				}
-
-
+				catch(SocketException& e)
+				{
+					std::cout << "Error while accepting client " << e.description() << std::endl;
+				}
 			}
 	}
 	catch(SocketException& e)
 	{
 		std::cout << "Error while creating server " << e.description() << std::endl;
 	}
+	return NULL;
 
 
 }

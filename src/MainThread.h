@@ -8,6 +8,8 @@
 #ifndef SOURCE_MAINTHREAD_H_
 #define SOURCE_MAINTHREAD_H_
 #include <pthread.h>
+#include "FireThread.h"
+#include "ServerThread.h"
 
 class MainThread {
 public:
@@ -18,6 +20,9 @@ private:
 	pthread_t 		mainThread;
 	pthread_mutex_t mainMutex;
 	pthread_cond_t 	mainCond;
+
+	FireThread* fireObj;
+	ServerThread* serverObj;
 
 public:
 	void startMainThread();

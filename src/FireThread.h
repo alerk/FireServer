@@ -7,11 +7,22 @@
 
 #ifndef SOURCE_FIREDETECTORTHREAD_H_
 #define SOURCE_FIREDETECTORTHREAD_H_
+#include <pthread.h>
 
 class FireThread {
 public:
 	FireThread();
 	virtual ~FireThread();
+
+private:
+	pthread_t 		fireThread;
+	pthread_mutex_t fireMutex;
+	pthread_cond_t 	fireCond;
+
+public:
+	void startFireThread();
+	void initFireThread();
+	void joinFireThread();
 };
 
 #endif /* SOURCE_FIREDETECTORTHREAD_H_ */
