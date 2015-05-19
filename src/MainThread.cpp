@@ -46,6 +46,8 @@ static void* run(void* arg)
 	while(true)
 	{
 
+		sleep(1);
+
 	}
 	return NULL;
 }

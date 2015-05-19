@@ -1,4 +1,5 @@
 #include "STEPII_DetectionFireColoredPixels.h"
+#include <iostream>
 
 GaussOfFireSamples arrayFireSamples[NUMBER_OF_FIRE_SAMPLES];
 void createMixtuaGaussModelOfFireSamples(int mode, char * fireName1,

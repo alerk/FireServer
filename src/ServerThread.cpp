@@ -13,6 +13,9 @@
 #define SERVER_PORT 13579
 static void* run(void* arg);
 static bool hasFire = false;
+
+using namespace std;
+
 ServerThread::ServerThread() {
 	// TODO Auto-generated constructor stub
 
@@ -46,6 +49,7 @@ static void* run(void* arg)
 			{
 				ServerSocket sendToSocket;
 				listenServer->accept(sendToSocket);
+				cout << "Client connected!" << endl;
 				try{
 					char buffer[5];
 					buffer[0] = 0xAA;

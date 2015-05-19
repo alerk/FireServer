@@ -1,5 +1,5 @@
 #include "CommonFunctions.h"
-
+#include <iostream>
 float getABS(float a)
 {
 	if (a > 0)

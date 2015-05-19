@@ -23,6 +23,7 @@ static void* run(void* arg)
 	FireThread* mainObj = (FireThread*)arg;
 	while(true)
 	{
+		sleep(1);
 
 	}
 	return NULL;
