@@ -38,6 +38,9 @@ class Socket
   bool send ( const std::string ) const;
   int recv ( std::string& ) const;
 
+  bool send (const char* send_buff, int size) const;
+  int recv(char* recv_buff) const;
+
 
   void set_non_blocking ( const bool );
 

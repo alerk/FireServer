@@ -44,33 +44,39 @@ static void* run(void* arg)
 	ServerThread* obj = (ServerThread*)arg;
 	try{
 
-		ServerSocket* listenServer = new ServerSocket(SERVER_PORT);
+		ServerSocket listenServer(SERVER_PORT);
 		while(true)
 			{
 				ServerSocket sendToSocket;
-				listenServer->accept(sendToSocket);
+				cout << "Waiting for client!" << endl;
+				listenServer.accept(sendToSocket);
 				cout << "Client connected!" << endl;
-				try{
-					char buffer[5];
-					buffer[0] = 0xAA;
-					buffer[1] = 0x55;
-					buffer[2] = buffer[3] = 0x00;
-					if(hasFire)
-					{
-						buffer[4] = 0x01;
-						hasFire = false;
-					}
-					else
-					{
-						buffer[4] = 0x00;
-					}
-					sendToSocket << buffer;
-
-
-				}
-				catch(SocketException& e)
+				while(true)
 				{
-					std::cout << "Error while accepting client " << e.description() << std::endl;
+					try{
+						char buffer[5];
+						buffer[0] = 0xAA;
+						buffer[1] = 0x55;
+						buffer[2] = buffer[3] = 0x00;
+						if(hasFire)
+						{
+							buffer[4] = 0x01;
+							hasFire = false;
+						}
+						else
+						{
+							buffer[4] = 0x00;
+						}
+						sendToSocket << buffer;
+						cout << "Client sent: " << buffer << endl;
+
+					}
+					catch(SocketException& e)
+					{
+						std::cout << "Error while accepting client " << e.description() << std::endl;
+						break;
+					}
+					sleep(1);
 				}
 			}
 	}
