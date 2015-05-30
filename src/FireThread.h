@@ -23,6 +23,7 @@ public:
 	void startFireThread();
 	void initFireThread();
 	void joinFireThread();
+	void (*fireDetected)(void);
 };
 
 #endif /* SOURCE_FIREDETECTORTHREAD_H_ */

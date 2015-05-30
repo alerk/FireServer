@@ -32,6 +32,8 @@ void MainThread::initMainThread() {
 	fireObj->initFireThread();
 	serverObj = new ServerThread();
 	serverObj->initServerThread();
+
+	fireObj->fireDetected = serverObj->handleFireDetected;
 }
 
 void MainThread::joinMainThread() {

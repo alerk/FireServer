@@ -94,3 +94,6 @@ void ServerThread::sendAlarm() {
 	hasFire = true;
 	pthread_mutex_unlock(&serverMutex);
 }
+
+void ServerThread::handleFireDetected(void) {
+}
