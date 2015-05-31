@@ -95,5 +95,8 @@ void ServerThread::sendAlarm() {
 	pthread_mutex_unlock(&serverMutex);
 }
 
-void ServerThread::handleFireDetected(void) {
+void ServerThread::handleFireDetected(void)
+{
+	std::cout << "Callback to ServerThread's function" << std::endl;
+
 }

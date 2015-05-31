@@ -8,6 +8,7 @@ RM := rm -rf
 
 # All of the sources participating in the build are defined here
 -include sources.mk
+-include src/ini_parser/subdir.mk
 -include src/Socket/subdir.mk
 -include src/FireDetector/subdir.mk
 -include src/subdir.mk
@@ -46,7 +47,7 @@ all: FireServer
 FireServer: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Cross G++ Linker'
-	g++ -L"/home/nguyen/work/eclipse/workspace/FireServer/opencv/lib" -L/usr/local/lib -o "FireServer" $(OBJS) $(USER_OBJS) $(LIBS)
+	g++ -L"/home/quyen/Work/eclipse/workspace/FireServer/opencv/lib" -L/usr/local/lib -o "FireServer" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 

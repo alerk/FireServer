@@ -8,6 +8,8 @@
 #include "MainThread.h"
 #include <iostream>
 #include <unistd.h>
+#include <tr1/functional>
+
 static void* run(void* arg);
 MainThread::MainThread() {
 	// TODO Auto-generated constructor stub
@@ -33,7 +35,9 @@ void MainThread::initMainThread() {
 	serverObj = new ServerThread();
 	serverObj->initServerThread();
 
-	fireObj->fireDetected = serverObj->handleFireDetected;
+	(fireObj->FireThread::fireDetected) = &(ServerThread::handleFireDetected);//quyen callback
+
+
 }
 
 void MainThread::joinMainThread() {

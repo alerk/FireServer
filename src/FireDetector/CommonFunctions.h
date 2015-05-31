@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SOURCE_COMMONFUNCTIONS_H_
+#define SOURCE_COMMONFUNCTIONS_H_
 
 #include <opencv2/imgproc/imgproc_c.h>  // Gaussian Blur
 #include <opencv2/core/core_c.h>        // Basic OpenCV structures (cv::Mat, Scalar)
@@ -10,3 +11,4 @@
 float getABS(float a);
 IplImage * RGB_Y_convert(IplImage* RGBImage);
 void getMotionAreas(int *x_cor, int *y_cor, unsigned char* idxAreaPixes);
+#endif
