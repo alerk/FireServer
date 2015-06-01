@@ -23,7 +23,7 @@ public:
 	void startServerThread();
 	void initServerThread();
 	void joinServerThread();
-	static void handleFireDetected(void);
+	static void handleFireDetected(void* arg);
 
 	void sendAlarm();
 };

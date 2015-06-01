@@ -91,12 +91,14 @@ static void* run(void* arg)
 
 void ServerThread::sendAlarm() {
 	pthread_mutex_lock(&serverMutex);
+	std::cout << "Callback to ServerThread's function" << std::endl;
 	hasFire = true;
 	pthread_mutex_unlock(&serverMutex);
 }
 
-void ServerThread::handleFireDetected(void)
+void ServerThread::handleFireDetected(void* arg)
 {
-	std::cout << "Callback to ServerThread's function" << std::endl;
+	ServerThread* objServer = (ServerThread*)arg;
+	objServer->sendAlarm();
 
 }

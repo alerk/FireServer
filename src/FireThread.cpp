@@ -20,6 +20,9 @@
 #include "FireDetector/STEPIV_SpatialWaveletAnalysis.h"
 #include "FireDetector/Config.h"
 
+#include <tr1/functional>
+
+
 static void* run(void* arg);
 static CvCapture* capture;
 FireThread::FireThread()
@@ -276,7 +279,8 @@ static void* run(void* arg)
 	        }
 	        else if(c=='f')
 	        {
-	        	fireObj->*(FireThread::fireDetected)();
+	        	(fireObj->fireDetected)(fireObj->handler);
+
 	        }
 	        else
 	        {
@@ -305,4 +309,10 @@ void FireThread::initFireThread()
 void FireThread::joinFireThread()
 {
 	pthread_join(fireThread, NULL);
+}
+
+void FireThread::connectCallback(CallbackPtr cb, void* cbHandler)
+{
+	fireDetected = cb;
+	handler = cbHandler;
 }

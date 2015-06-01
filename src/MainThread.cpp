@@ -35,7 +35,11 @@ void MainThread::initMainThread() {
 	serverObj = new ServerThread();
 	serverObj->initServerThread();
 
-	(fireObj->FireThread::fireDetected) = &(ServerThread::handleFireDetected);//quyen callback
+	fireObj->connectCallback(ServerThread::handleFireDetected, serverObj);
+//	fireObj->fireDetected = std::tr1::bind(&ServerThread::handleFireDetected,serverObj, _1);//connect the callback to handler
+
+
+//	(fireObj->FireThread::fireDetected) = &(ServerThread::handleFireDetected);//quyen callback
 
 
 }
