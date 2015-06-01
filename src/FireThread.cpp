@@ -95,8 +95,12 @@ static void* run(void* arg)
 	    if(!capture){
 	        return NULL;
 	    }
-	    frameWidth = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
-	    frameHeigh = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
+
+	    frame = cvQueryFrame( capture );
+	    CvSize frameSize = cvGetSize(frame);
+
+	    frameWidth = frameSize.width; //cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
+	    frameHeigh = frameSize.height;//cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
 	    // init mask of fired pixel
 	    temp = cvCreateImage(cvSize(frameWidth, frameHeigh),IPL_DEPTH_8U,3);
 	    test_image = cvCreateImage(cvSize(frameWidth, frameHeigh),IPL_DEPTH_8U,3);
@@ -105,7 +109,7 @@ static void* run(void* arg)
 	    MaskOfIdxFireColoredPoints = cvCreateImage(cvSize(frameWidth, frameHeigh),IPL_DEPTH_8U,1);
 	    MaskOfIdxFirePoints = cvCreateImage(cvSize(frameWidth, frameHeigh),IPL_DEPTH_8U,1);
 	    // init frame-buffer of Y channels
-	    frame = cvQueryFrame( capture );
+
 	    if (  strcmp("RGB",frame->colorModel)==0)
 	    {
 	        convertColorCode = CV_RGB2YCrCb;
@@ -287,6 +291,12 @@ static void* run(void* arg)
 	        	//do nothing
 	        }
 	    }
+
+//	while(true)
+//	{
+//		(fireObj->fireDetected)(fireObj->handler);
+//		sleep(1);
+//	}
 	return NULL;
 }
 
