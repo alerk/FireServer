@@ -113,7 +113,7 @@ bool Socket::accept ( Socket& new_socket ) const
 }
 
 
-bool Socket::send ( const std::string s ) const
+bool Socket::send_string ( const std::string s ) const
 {
 	if (DEBUG)
 	{
@@ -132,7 +132,7 @@ bool Socket::send ( const std::string s ) const
 }
 
 
-int Socket::recv ( std::string& s ) const
+int Socket::recv_string ( std::string& s ) const
 {
 	char buf [ MAXRECV + 1 ];
 

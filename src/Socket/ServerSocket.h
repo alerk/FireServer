@@ -8,7 +8,7 @@
 
 using namespace std;
 
-class ServerSocket : private Socket
+class ServerSocket : public Socket
 {
  public:
 
@@ -25,8 +25,8 @@ if (DEBUG)
   const ServerSocket& operator << ( const std::string& ) const;
   const ServerSocket& operator >> ( std::string& ) const;
 
-  const ServerSocket& operator << ( const char* ) const;
-  const ServerSocket& operator >> ( char* ) const;
+//  const ServerSocket& operator << ( const char* ) const;
+//  const ServerSocket& operator >> ( char* ) const;
 
   void accept ( ServerSocket& );
 

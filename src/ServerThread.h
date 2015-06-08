@@ -17,9 +17,10 @@ private:
 	pthread_mutex_t serverMutex;
 	pthread_cond_t 	serverCond;
 
-	bool hasFire;
+
 
 public:
+	bool hasFire;
 	void startServerThread();
 	void initServerThread();
 	void joinServerThread();

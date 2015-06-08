@@ -9,9 +9,9 @@
 #include <iostream>
 #include <unistd.h>
 
-#include "opencv2/core/core_c.h"
-#include "opencv2/imgproc/imgproc_c.h"
-#include "opencv2/highgui/highgui_c.h"
+//#include "opencv2/core/core_c.h"
+//#include "opencv2/imgproc/imgproc_c.h"
+//#include "opencv2/highgui/highgui_c.h"
 
 #include "FireDetector/CommonFunctions.h"
 #include "FireDetector/STEPI_MovingRegionDetection.h"
@@ -49,7 +49,7 @@ static void* run(void* arg)
 	    IplImage* temp;
 	    IplImage* Y_image;
 	    IplImage* test_image;
-	    CvCapture* capture;
+//	    CvCapture* capture;
 	    char c;
 	    int i,j;
 	    int convertColorCode = 0;
@@ -80,7 +80,7 @@ static void* run(void* arg)
 	#endif
 
 	    //init STEP2 GAUSS
-	    createMixtuaGaussModelOfFireSamples(INPUT_IMAGES_SAMPLES_MODE,
+	    createMixtuaGaussModelOfFireSamples(CONFIGED_NUMBER_MODE,
 	                                        FIRE_FILE1,
 	                                        FIRE_FILE2,
 	                                        FIRE_FILE3,
@@ -91,6 +91,18 @@ static void* run(void* arg)
 	                                        FIRE_FILE8,
 	                                        FIRE_FILE9,
 	                                        FIRE_FILE10);
+//	    createMixtuaGaussModelOfFireSamples(INPUT_IMAGES_SAMPLES_MODE,
+//	    	                                        FIRE_FILE1,
+//	    	                                        FIRE_FILE2,
+//	    	                                        FIRE_FILE3,
+//	    	                                        FIRE_FILE4,
+//	    	                                        FIRE_FILE5,
+//	    	                                        FIRE_FILE6,
+//	    	                                        FIRE_FILE7,
+//	    	                                        FIRE_FILE8,
+//	    	                                        FIRE_FILE9,
+//	    	                                        FIRE_FILE10);
+
 //	    capture = cvCaptureFromAVI( TEST_FILE);
 	    if(!capture){
 	        return NULL;
@@ -311,7 +323,11 @@ void FireThread::startFireThread()
 void FireThread::initFireThread()
 {
 	//init the video source here - prepare for multiple inputs
-	capture = cvCaptureFromFile("../Resources/outdoor_daytime_10m_heptane_CCD_001.avi");
+	capture = cvCaptureFromFile("/home/nguyen/Videos/outdoor_daytime_10m_heptane_CCD_001.avi");
+	if(!capture)
+	{
+		std::cout << "Cannot open file!" << std::endl;
+	}
 	this->fireDetected = NULL;
 
 }

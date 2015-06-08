@@ -21,7 +21,7 @@ ClientSocket::ClientSocket ( std::string host, int port )
 
 const ClientSocket& ClientSocket::operator << ( const std::string& s ) const
 {
-  if ( ! Socket::send ( s ) )
+  if ( ! Socket::send_string ( s ) )
     {
       throw SocketException ( "Could not write to socket." );
     }
@@ -33,7 +33,7 @@ const ClientSocket& ClientSocket::operator << ( const std::string& s ) const
 
 const ClientSocket& ClientSocket::operator >> ( std::string& s ) const
 {
-  if ( ! Socket::recv ( s ) )
+  if ( ! Socket::recv_string ( s ) )
     {
       throw SocketException ( "Could not read from socket." );
     }

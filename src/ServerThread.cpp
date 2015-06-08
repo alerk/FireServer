@@ -9,11 +9,13 @@
 #include "Socket/ServerSocket.h"
 #include "Socket/SocketException.h"
 #include <iostream>
+#include <string.h>
+#include <stdio.h>
 #include <unistd.h>
 #define SERVER_PORT 13579
 static void* run(void* arg);
-static bool hasFire = false;
 
+static unsigned char counter = 0;
 using namespace std;
 
 ServerThread::ServerThread() {
@@ -54,21 +56,31 @@ static void* run(void* arg)
 				while(true)
 				{
 					try{
-						char buffer[5];
-						buffer[0] = 0xAA;
+						unsigned char buffer[5];
+						memset(buffer,0,5);
+						buffer[0] = 0xaa;
 						buffer[1] = 0x55;
-						buffer[2] = buffer[3] = 0x00;
-						if(hasFire)
+						buffer[2] = 0x00;
+						buffer[3] = (counter++);
+						if(obj->hasFire)
 						{
 							buffer[4] = 0x01;
-							hasFire = false;
+							obj->hasFire = false;
 						}
 						else
 						{
 							buffer[4] = 0x00;
 						}
-						sendToSocket << buffer;
-						cout << "Client sent: " << buffer << endl;
+//						bool sendOK = sendToSocket.send(buffer, 5);
+						sendToSocket.send( (char*)buffer, 5);
+
+						cout << "Client sent: " ;
+						for(int i=0;i<5;i++)
+						{
+							printf("%2.2x ", buffer[i]);
+						}
+						cout << endl;
+
 
 					}
 					catch(SocketException& e)
@@ -94,6 +106,7 @@ void ServerThread::sendAlarm() {
 	std::cout << "Callback to ServerThread's function" << std::endl;
 	hasFire = true;
 	pthread_mutex_unlock(&serverMutex);
+//	pthread_cond_signal(&serverCond);
 }
 
 void ServerThread::handleFireDetected(void* arg)
