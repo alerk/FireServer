@@ -14,16 +14,16 @@
 #define INPUT_IMAGES_SAMPLES_MODE 2
 /* This is the total number of training images to train the Fire-colored detector system. Training should be fire image with various colors */
 #define NUMBER_OF_FIRE_SAMPLES 10	
-#define FIRE_FILE1 "/home/quyen/Work/eclipse/workspace/VFDS/imageclipper/0.png"
-#define FIRE_FILE2 "/home/quyen/Work/eclipse/workspace/VFDS/imageclipper/1.png"
-#define FIRE_FILE3 "/home/quyen/Work/eclipse/workspace/VFDS/imageclipper/2.png"
-#define FIRE_FILE4 "/home/quyen/Work/eclipse/workspace/VFDS/imageclipper/3.png"
-#define FIRE_FILE5 "/home/quyen/Work/eclipse/workspace/VFDS/imageclipper/4.png"
-#define FIRE_FILE6 "/home/quyen/Work/eclipse/workspace/VFDS/imageclipper/5.png"
-#define FIRE_FILE7 "/home/quyen/Work/eclipse/workspace/VFDS/imageclipper/6.png"
-#define FIRE_FILE8 "/home/quyen/Work/eclipse/workspace/VFDS/imageclipper/7.png"
-#define FIRE_FILE9 "/home/quyen/Work/eclipse/workspace/VFDS/imageclipper/8.png"
-#define FIRE_FILE10 "/home/quyen/Work/eclipse/workspace/VFDS/imageclipper/9.png"
+#define FIRE_FILE0 "Resources/imageclipper/0.png"
+#define FIRE_FILE1 "Resources/imageclipper/1.png"
+#define FIRE_FILE2 "Resources/imageclipper/2.png"
+#define FIRE_FILE3 "Resources/imageclipper/3.png"
+#define FIRE_FILE4 "Resources/imageclipper/4.png"
+#define FIRE_FILE5 "Resources/imageclipper/5.png"
+#define FIRE_FILE6 "Resources/imageclipper/6.png"
+#define FIRE_FILE7 "Resources/imageclipper/7.png"
+#define FIRE_FILE8 "Resources/imageclipper/8.png"
+#define FIRE_FILE9 "Resources/imageclipper/9.png"
 // another define of fire colored
 #define FIRE_COLOR_DIS1_MEAN_RED 121.16
 #define FIRE_COLOR_DIS1_MEAN_GREEN 76.87

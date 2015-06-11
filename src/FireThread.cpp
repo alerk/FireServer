@@ -65,6 +65,14 @@ static void* run(void* arg)
 	    int window_size_col_min = 0;
 	    int window_size_col_max = 0;
 
+//	    char cCurrentPath[100];
+//	    if(!getcwd(cCurrentPath,100))
+//	    {
+//	    	return NULL;
+//	    }
+//	    cCurrentPath[99]='\0';
+//	    std::cout << cCurrentPath << std::endl;
+
 	    cvNamedWindow("video-window",1);
 	#ifdef TEST_STEP1
 	    cvNamedWindow("MovingPixel",1);
@@ -80,28 +88,28 @@ static void* run(void* arg)
 	#endif
 
 	    //init STEP2 GAUSS
-	    createMixtuaGaussModelOfFireSamples(CONFIGED_NUMBER_MODE,
-	                                        FIRE_FILE1,
-	                                        FIRE_FILE2,
-	                                        FIRE_FILE3,
-	                                        FIRE_FILE4,
-	                                        FIRE_FILE5,
-	                                        FIRE_FILE6,
-	                                        FIRE_FILE7,
-	                                        FIRE_FILE8,
-	                                        FIRE_FILE9,
-	                                        FIRE_FILE10);
-//	    createMixtuaGaussModelOfFireSamples(INPUT_IMAGES_SAMPLES_MODE,
-//	    	                                        FIRE_FILE1,
-//	    	                                        FIRE_FILE2,
-//	    	                                        FIRE_FILE3,
-//	    	                                        FIRE_FILE4,
-//	    	                                        FIRE_FILE5,
-//	    	                                        FIRE_FILE6,
-//	    	                                        FIRE_FILE7,
-//	    	                                        FIRE_FILE8,
-//	    	                                        FIRE_FILE9,
-//	    	                                        FIRE_FILE10);
+//	    createMixtuaGaussModelOfFireSamples(CONFIGED_NUMBER_MODE,
+//	                                        FIRE_FILE1,
+//	                                        FIRE_FILE2,
+//	                                        FIRE_FILE3,
+//	                                        FIRE_FILE4,
+//	                                        FIRE_FILE5,
+//	                                        FIRE_FILE6,
+//	                                        FIRE_FILE7,
+//	                                        FIRE_FILE8,
+//	                                        FIRE_FILE9,
+//	                                        FIRE_FILE10);
+	    createMixtuaGaussModelOfFireSamples(INPUT_IMAGES_SAMPLES_MODE,
+	    	                                        FIRE_FILE0,
+	    	                                        FIRE_FILE1,
+	    	                                        FIRE_FILE2,
+	    	                                        FIRE_FILE3,
+	    	                                        FIRE_FILE4,
+	    	                                        FIRE_FILE5,
+	    	                                        FIRE_FILE6,
+	    	                                        FIRE_FILE7,
+	    	                                        FIRE_FILE8,
+	    	                                        FIRE_FILE9);
 
 //	    capture = cvCaptureFromAVI( TEST_FILE);
 	    if(!capture){
@@ -265,6 +273,11 @@ static void* run(void* arg)
 
 	        cvShowImage("FiredPixel",MaskOfIdxFirePoints);
 	        cvShowImage("video-window",test_image);
+	        int value = cvCountNonZero(MaskOfIdxFirePoints);
+	        if(value > 10)
+	        {
+	        	(fireObj->fireDetected)(fireObj->handler);
+	        }
 	#endif
 	        /*************************END STEP4**************************************/
 	        //@@@@@@@@@@@@@@@@
@@ -323,7 +336,7 @@ void FireThread::startFireThread()
 void FireThread::initFireThread()
 {
 	//init the video source here - prepare for multiple inputs
-	capture = cvCaptureFromFile("/home/nguyen/Videos/outdoor_daytime_10m_heptane_CCD_001.avi");
+	capture = cvCaptureFromFile("Resources/outdoor_daytime_10m_heptane_CCD_001.avi");
 	if(!capture)
 	{
 		std::cout << "Cannot open file!" << std::endl;
