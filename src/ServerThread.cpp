@@ -12,10 +12,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#include "ini_parser/iniparser.h"
 #define SERVER_PORT 13579
 static void* run(void* arg);
 
 static unsigned char counter = 0;
+static int serverPort = 0;
 using namespace std;
 
 ServerThread::ServerThread() {
@@ -35,6 +38,16 @@ void ServerThread::startServerThread() {
 }
 
 void ServerThread::initServerThread() {
+	dictionary* ini;
+	std::string src_str;
+	ini = iniparser_load("Resources/FireServer.conf");
+	if(ini==NULL)
+	{
+		fprintf(stderr, "[serverThread]cannot parse file\n");
+		return;
+	}
+	serverPort = iniparser_getint(ini, "server_thread:port",12345);
+	iniparser_freedict(ini);
 }
 
 void ServerThread::joinServerThread() {
@@ -46,7 +59,7 @@ static void* run(void* arg)
 	ServerThread* obj = (ServerThread*)arg;
 	try{
 
-		ServerSocket listenServer(SERVER_PORT);
+		ServerSocket listenServer(serverPort);
 		while(true)
 			{
 				ServerSocket sendToSocket;
@@ -103,7 +116,7 @@ static void* run(void* arg)
 
 void ServerThread::sendAlarm() {
 	pthread_mutex_lock(&serverMutex);
-	std::cout << "Callback to ServerThread's function" << std::endl;
+//	std::cout << "Callback to ServerThread's function" << std::endl;
 	hasFire = true;
 	pthread_mutex_unlock(&serverMutex);
 //	pthread_cond_signal(&serverCond);

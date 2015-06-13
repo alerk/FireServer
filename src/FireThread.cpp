@@ -19,12 +19,14 @@
 #include "FireDetector/STEPIII_TemporalWaveletAnalysis.h"
 #include "FireDetector/STEPIV_SpatialWaveletAnalysis.h"
 #include "FireDetector/Config.h"
+#include "ini_parser/iniparser.h"
 
 #include <tr1/functional>
 
 
 static void* run(void* arg);
 static CvCapture* capture;
+static int fireThreshold=0;
 FireThread::FireThread()
 {
 	// TODO Auto-generated constructor stub
@@ -49,7 +51,6 @@ static void* run(void* arg)
 	    IplImage* temp;
 	    IplImage* Y_image;
 	    IplImage* test_image;
-//	    CvCapture* capture;
 	    char c;
 	    int i,j;
 	    int convertColorCode = 0;
@@ -88,17 +89,6 @@ static void* run(void* arg)
 	#endif
 
 	    //init STEP2 GAUSS
-//	    createMixtuaGaussModelOfFireSamples(CONFIGED_NUMBER_MODE,
-//	                                        FIRE_FILE1,
-//	                                        FIRE_FILE2,
-//	                                        FIRE_FILE3,
-//	                                        FIRE_FILE4,
-//	                                        FIRE_FILE5,
-//	                                        FIRE_FILE6,
-//	                                        FIRE_FILE7,
-//	                                        FIRE_FILE8,
-//	                                        FIRE_FILE9,
-//	                                        FIRE_FILE10);
 	    createMixtuaGaussModelOfFireSamples(INPUT_IMAGES_SAMPLES_MODE,
 	    	                                        FIRE_FILE0,
 	    	                                        FIRE_FILE1,
@@ -274,7 +264,7 @@ static void* run(void* arg)
 	        cvShowImage("FiredPixel",MaskOfIdxFirePoints);
 	        cvShowImage("video-window",test_image);
 	        int value = cvCountNonZero(MaskOfIdxFirePoints);
-	        if(value > 10)
+	        if(value > fireThreshold)
 	        {
 	        	(fireObj->fireDetected)(fireObj->handler);
 	        }
@@ -336,10 +326,22 @@ void FireThread::startFireThread()
 void FireThread::initFireThread()
 {
 	//init the video source here - prepare for multiple inputs
-	capture = cvCaptureFromFile("Resources/outdoor_daytime_10m_heptane_CCD_001.avi");
+	dictionary* ini;
+	std::string src_str;
+	ini = iniparser_load("Resources/FireServer.conf");
+	if(ini==NULL)
+	{
+        fprintf(stderr, "cannot parse file\n");
+        return;
+    }
+//    iniparser_dump(ini, stderr);
+    src_str = iniparser_getstring(ini,"fire_detector:source", "Resources/outdoor_daytime_10m_heptane_CCD_001.avi");
+    fireThreshold = iniparser_getint(ini, "fire_detector:threshold",10);
+	iniparser_freedict(ini);
+	capture = cvCaptureFromFile(src_str.c_str());
 	if(!capture)
 	{
-		std::cout << "Cannot open file!" << std::endl;
+		std::cout << "Cannot open video source!" << std::endl;
 	}
 	this->fireDetected = NULL;
 
