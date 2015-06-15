@@ -1,7 +1,27 @@
 #include "STEPI_MovingRegionDetection.h"
 #include <stdio.h>
 
+static cv::Mat back;
+static cv::Mat front;
+static cv::BackgroundSubtractorMOG2 bg;
+static std::vector<std::vector<cv::Point> > contours;
+
+
 //V4 with avgThreshold, the return data type is struct IplImage
+void getMovingPixels_(cv::Mat input, cv::Mat& movingMap)
+{
+	bg.operator ()(input, front);
+	bg.getBackgroundImage(back);
+	cv::erode(front,front,cv::Mat());
+	cv::dilate(front,front,cv::Mat());
+	cv::findContours(front,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
+	cv::drawContours(input,contours,-1,cv::Scalar(0,0,255),2);
+	//cv::imshow("Frame",input);
+	cv::imshow("Background",back);
+	movingMap = front.clone();
+
+}
+
 void getMovingPixels(IplImage* oneDI_n, IplImage* oneDI_nm1, int lightParam, unsigned char* threshold, IplImage* setOfStationPixel)
 {
 	//setOfStationPixel 1: moving, 0: station

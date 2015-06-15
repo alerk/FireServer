@@ -1,7 +1,115 @@
 #include "STEPII_DetectionFireColoredPixels.h"
 #include <iostream>
 
+using namespace cv;
 GaussOfFireSamples arrayFireSamples[NUMBER_OF_FIRE_SAMPLES];
+
+void createMixtuaGaussModelOfFireSamples_(int mode, char * fireName1,
+	char * fireName2,
+	char * fireName3,
+	char * fireName4,
+	char * fireName5,
+	char * fireName6,
+	char * fireName7,
+	char * fireName8,
+	char * fireName9,
+	char * fireName10)
+{
+	int i,j,x,y;
+	float R_avg		;
+	float G_avg		;
+	float B_avg		;
+	double R_radius	;
+	double G_radius	;
+	double B_radius	;
+	int numberOfPixel;
+	cv::Mat img[NUMBER_OF_FIRE_SAMPLES];
+	if (mode == INPUT_IMAGES_SAMPLES_MODE)
+	{
+
+		//read the input file
+		img[0] = imread(fireName1);
+		img[1] = imread(fireName2);
+		img[2] = imread(fireName3);
+		img[3] = imread(fireName4);
+		img[4] = imread(fireName5);
+		img[5] = imread(fireName6);
+		img[6] = imread(fireName7);
+		img[7] = imread(fireName8);
+		img[8] = imread(fireName9);
+		img[9] = imread(fireName10);
+
+		for ( i = 0; i < NUMBER_OF_FIRE_SAMPLES; i++)
+		{
+			if (!img[i].empty())
+			{
+				//calculate Gauss for each sphere sample
+				R_avg			= 0;
+				G_avg			= 0;
+				B_avg			= 0;
+				R_radius		= 0;
+				G_radius		= 0;
+				B_radius		= 0;
+				//cv::Mat::MSize imgSize = img[i].size;
+				int imwidth = img[i].cols;
+				int imheight = img[i].rows;
+				numberOfPixel	= imwidth * imheight;
+				int cn = img[i].channels();
+				Scalar_<uint8_t> rgbPixel;
+				for ( x = 0; x < imheight; x++ )
+				{
+					uchar* row_ptr = img[i].row(x).data;
+
+					for ( y = 0; y < imwidth; y++)
+					{
+						rgbPixel.val[0] = row_ptr[y*cn+0];
+						rgbPixel.val[1] = row_ptr[y*cn+1];
+						rgbPixel.val[2] = row_ptr[y*cn+2];
+
+						R_avg+=rgbPixel.val[0];
+						G_avg+=rgbPixel.val[1];
+						B_avg+=rgbPixel.val[2];
+					}
+				}
+				R_avg /= numberOfPixel;
+				G_avg /= numberOfPixel;
+				B_avg /= numberOfPixel;
+
+				for ( x = 0; x < imheight; x++ )
+				{
+					uchar* row_ptr = img[i].row(x).data;
+					for ( y = 0; y < imwidth; y++)
+					{
+						rgbPixel.val[0] = row_ptr[y*cn+0];
+						rgbPixel.val[1] = row_ptr[y*cn+1];
+						rgbPixel.val[2] = row_ptr[y*cn+2];
+
+						R_radius += (rgbPixel.val[0]-R_avg)*(rgbPixel.val[0]-R_avg);
+						G_radius += (rgbPixel.val[1]-G_avg)*(rgbPixel.val[1]-G_avg);
+						B_radius += (rgbPixel.val[2]-B_avg)*(rgbPixel.val[2]-B_avg);
+					}
+				}
+
+				R_radius /=numberOfPixel;
+				G_radius /=numberOfPixel;
+				B_radius /=numberOfPixel;
+
+				R_radius = sqrt(R_radius);
+				G_radius = sqrt(G_radius);
+				B_radius = sqrt(B_radius);
+
+				arrayFireSamples[i].R_center = R_avg;
+				arrayFireSamples[i].G_center = G_avg;
+				arrayFireSamples[i].B_center = B_avg;
+				arrayFireSamples[i].R_radius = R_radius;
+				arrayFireSamples[i].G_radius = G_radius;
+				arrayFireSamples[i].B_radius = B_radius;
+			}
+		}
+	}
+
+}
+
 void createMixtuaGaussModelOfFireSamples(int mode, char * fireName1,
 	char * fireName2,
 	char * fireName3,
