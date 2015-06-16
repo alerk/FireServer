@@ -9,9 +9,9 @@
 #include <iostream>
 #include <unistd.h>
 
-//#include "opencv2/core/core_c.h"
-//#include "opencv2/imgproc/imgproc_c.h"
-//#include "opencv2/highgui/highgui_c.h"
+#include "opencv2/core/core.hpp"
+#include "opencv2/imgproc/imgproc.hpp"
+#include "opencv2/highgui/highgui.hpp"
 
 #include "FireDetector/CommonFunctions.h"
 #include "FireDetector/STEPI_MovingRegionDetection.h"

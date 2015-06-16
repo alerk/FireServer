@@ -1,5 +1,11 @@
 #include "CommonFunctions.h"
 #include <iostream>
+
+
+#include <opencv2/imgproc/imgproc_c.h>  // Gaussian Blur
+#include <opencv2/core/core_c.h>        // Basic OpenCV structures (cv::Mat, Scalar)
+#include <opencv2/highgui/highgui_c.h>  // OpenCV window I/O
+
 float getABS(float a)
 {
 	if (a > 0)

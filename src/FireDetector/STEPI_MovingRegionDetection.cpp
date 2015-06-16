@@ -1,5 +1,14 @@
 #include "STEPI_MovingRegionDetection.h"
+
 #include <stdio.h>
+#include <vector>
+
+#include <opencv2/imgproc/imgproc.hpp>  // Gaussian Blur
+#include <opencv2/core/core.hpp>        // Basic OpenCV structures (cv::Mat, Scalar)
+#include <opencv2/highgui/highgui.hpp>  // OpenCV window I/O
+#include <opencv2/video/background_segm.hpp>
+
+using namespace cv;
 
 static cv::Mat back;
 static cv::Mat front;
@@ -12,12 +21,24 @@ void getMovingPixels_(cv::Mat input, cv::Mat& movingMap)
 {
 	bg.operator ()(input, front);
 	bg.getBackgroundImage(back);
-	cv::erode(front,front,cv::Mat());
-	cv::dilate(front,front,cv::Mat());
+	//cv::erode(front,front,cv::Mat());
+	//cv::dilate(front,front,cv::Mat());
 	cv::findContours(front,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
-	cv::drawContours(input,contours,-1,cv::Scalar(0,0,255),2);
+	vector<vector<Point> > contours_poly( contours.size() );
+	for( int i = 0; i < contours.size(); i++ )
+	{
+		approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
+		//						boundRect[i] = boundingRect( Mat(contours_poly[i]) );
+		//						minEnclosingCircle( (Mat)contours_poly[i], center[i], radius[i] );
+	}
+	for( int i = 0; i< contours.size(); i++ )
+	{
+		Scalar color = Scalar( 255,255,255 );
+		drawContours( front, contours_poly, i, color, CV_FILLED, 8, vector<Vec4i>(), 0, Point() );
+	}
+//	cv::drawContours(input,contours,-1,cv::Scalar(0,0,255),2);
 	//cv::imshow("Frame",input);
-	cv::imshow("Background",back);
+//	cv::imshow("Background",back);
 	movingMap = front.clone();
 
 }
