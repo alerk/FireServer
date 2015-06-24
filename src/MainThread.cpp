@@ -13,35 +13,34 @@
 static void* run(void* arg);
 MainThread::MainThread() {
 	// TODO Auto-generated constructor stub
+	initMainThread();
 
 }
 
 MainThread::~MainThread() {
 	// TODO Auto-generated destructor stub
+	delete(fireObj);
+	delete(serverObj);
+	pthread_cancel(mainThread);
 }
 
 void MainThread::startMainThread() {
+	if( pthread_create(&mainThread,NULL,run,(void*)this)!=0)
+	{
+		std::cout << "Fail to create serverThread" << std::endl;
+	}
 	fireObj->startFireThread();
 	serverObj->startServerThread();
-	if( pthread_create(&mainThread,NULL,run,(void*)this)!=0)
-		{
-			std::cout << "Fail to create serverThread" << std::endl;
-		}
 }
 
 void MainThread::initMainThread() {
 	fireObj = new FireThread();
-	fireObj->initFireThread();
+	//fireObj->initFireThread();
 	serverObj = new ServerThread();
-	serverObj->initServerThread();
+	//serverObj->initServerThread();
 
+	//assign callbac from fireObj to serverObj
 	fireObj->connectCallback(ServerThread::handleFireDetected, serverObj);
-//	fireObj->fireDetected = std::tr1::bind(&ServerThread::handleFireDetected,serverObj, _1);//connect the callback to handler
-
-
-//	(fireObj->FireThread::fireDetected) = &(ServerThread::handleFireDetected);//quyen callback
-
-
 }
 
 void MainThread::joinMainThread() {

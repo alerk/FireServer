@@ -25,13 +25,13 @@ void getMovingPixels_(cv::Mat input, cv::Mat& movingMap)
 	//cv::dilate(front,front,cv::Mat());
 	cv::findContours(front,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
 	vector<vector<Point> > contours_poly( contours.size() );
-	for( int i = 0; i < contours.size(); i++ )
+	for(unsigned int i = 0; i < contours.size(); i++ )
 	{
 		approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
 		//						boundRect[i] = boundingRect( Mat(contours_poly[i]) );
 		//						minEnclosingCircle( (Mat)contours_poly[i], center[i], radius[i] );
 	}
-	for( int i = 0; i< contours.size(); i++ )
+	for(unsigned int i = 0; i< contours.size(); i++ )
 	{
 		Scalar color = Scalar( 255,255,255 );
 		drawContours( front, contours_poly, i, color, CV_FILLED, 8, vector<Vec4i>(), 0, Point() );
@@ -39,8 +39,8 @@ void getMovingPixels_(cv::Mat input, cv::Mat& movingMap)
 //	cv::drawContours(input,contours,-1,cv::Scalar(0,0,255),2);
 	//cv::imshow("Frame",input);
 //	cv::imshow("Background",back);
-	movingMap = front.clone();
-
+	GaussianBlur(front, movingMap, Size(5,5), 0, 0);
+//	movingMap = front.clone();
 }
 
 void getMovingPixels(IplImage* oneDI_n, IplImage* oneDI_nm1, int lightParam, unsigned char* threshold, IplImage* setOfStationPixel)

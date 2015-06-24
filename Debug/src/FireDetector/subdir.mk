@@ -5,6 +5,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../src/FireDetector/CommonFunctions.cpp \
+../src/FireDetector/FireDetector.cpp \
 ../src/FireDetector/STEPIII_TemporalWaveletAnalysis.cpp \
 ../src/FireDetector/STEPII_DetectionFireColoredPixels.cpp \
 ../src/FireDetector/STEPIV_SpatialWaveletAnalysis.cpp \
@@ -12,6 +13,7 @@ CPP_SRCS += \
 
 OBJS += \
 ./src/FireDetector/CommonFunctions.o \
+./src/FireDetector/FireDetector.o \
 ./src/FireDetector/STEPIII_TemporalWaveletAnalysis.o \
 ./src/FireDetector/STEPII_DetectionFireColoredPixels.o \
 ./src/FireDetector/STEPIV_SpatialWaveletAnalysis.o \
@@ -19,6 +21,7 @@ OBJS += \
 
 CPP_DEPS += \
 ./src/FireDetector/CommonFunctions.d \
+./src/FireDetector/FireDetector.d \
 ./src/FireDetector/STEPIII_TemporalWaveletAnalysis.d \
 ./src/FireDetector/STEPII_DetectionFireColoredPixels.d \
 ./src/FireDetector/STEPIV_SpatialWaveletAnalysis.d \

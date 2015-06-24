@@ -16,5 +16,6 @@ int main() {
 	mainObj->initMainThread();
 	mainObj->startMainThread();
 	mainObj->joinMainThread();
+
 	return 0;
 }

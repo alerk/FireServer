@@ -7,6 +7,8 @@
 using namespace cv;
 GaussOfFireSamples arrayFireSamples[NUMBER_OF_FIRE_SAMPLES];
 
+
+
 void createMixtuaGaussModelOfFireSamples_(int mode, char * fireName1,
 	char * fireName2,
 	char * fireName3,
@@ -279,6 +281,47 @@ void createMixtuaGaussModelOfFireSamples(int mode, char * fireName1,
 		arrayFireSamples[9].G_radius = FIRE_COLOR_DIS10_VARIANCE;
 		arrayFireSamples[9].B_radius = FIRE_COLOR_DIS10_VARIANCE;
 	}
+}
+int isFireColored_()
+{
+	return 0;
+}
+
+void setOfColorPixel(cv::Mat movingPixels,cv::Mat& MaskOfIdxFirePoints, cv::Mat RGBcurrentframe)
+{
+	//change rgb to YCbCr
+	Mat YCrCbFrame;
+	RGBcurrentframe.convertTo(YCrCbFrame, CV_32FC3, 1/255.0);
+	cvtColor(YCrCbFrame, YCrCbFrame, CV_BGR2YCrCb);
+	//			src			dest		type
+
+
+	//calculate the mean of Cb, Cr, Y
+	//extract Y, Cr, Cb channel
+//	Mat YChannel(YCrCbFrame.rows, YCrCbFrame.cols, CV_8UC1);
+//
+//	Mat CrChannel(YCrCbFrame.rows, YCrCbFrame.cols, CV_8UC1);
+//
+//	Mat CbChannel(YCrCbFrame.rows, YCrCbFrame.cols, CV_8UC1);
+//
+//	Mat out[] = {YChannel, CrChannel, CbChannel};
+//	// Ycc[0] -> Y; Ycc[1] -> Cr; Ycc[2] -> Cb
+//	int from_to[] = {0,0,1,1,2,2};
+//	mixChannels(&YCrCbFrame, 1, out, 3, from_to, 3);
+	Mat YChannel, CrChannel, CbChannel;
+	vector<Mat> channels(3);
+	split(YCrCbFrame, channels);
+	YChannel = channels[0];
+	CrChannel = channels[1];
+	CbChannel = channels[2];
+
+
+
+	//set the MaskOfIdxFirePoint
+
+	//combine 2 Mat to form Fire Color Moving
+
+	//result at  this point, do not wait to the 3 and 4 step
 }
 
 int isFireColored(unsigned char R_value,unsigned char G_value,unsigned char B_value)

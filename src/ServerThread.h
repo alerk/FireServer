@@ -12,7 +12,7 @@ class ServerThread {
 public:
 	ServerThread();
 	virtual ~ServerThread();
-private:
+//private:
 	pthread_t 		serverThread;
 	pthread_mutex_t serverMutex;
 	pthread_cond_t 	serverCond;

@@ -9,64 +9,94 @@
 #include <iostream>
 #include <unistd.h>
 
-#include "opencv2/core/core.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
 
-#include "FireDetector/CommonFunctions.h"
-#include "FireDetector/STEPI_MovingRegionDetection.h"
-#include "FireDetector/STEPII_DetectionFireColoredPixels.h"
-#include "FireDetector/STEPIII_TemporalWaveletAnalysis.h"
-#include "FireDetector/STEPIV_SpatialWaveletAnalysis.h"
-#include "FireDetector/Config.h"
+#define DELAY_TIME 20
+#define RUN_CPP 1
+
+#if RUN_CPP
+	#include "FireDetector/FireDetector.h"
+#else
+	#include "opencv2/core/core.hpp"
+	#include "opencv2/imgproc/imgproc.hpp"
+	#include "opencv2/highgui/highgui.hpp"
+
+	#include "FireDetector/CommonFunctions.h"
+	#include "FireDetector/STEPI_MovingRegionDetection.h"
+	#include "FireDetector/STEPII_DetectionFireColoredPixels.h"
+	#include "FireDetector/STEPIII_TemporalWaveletAnalysis.h"
+	#include "FireDetector/STEPIV_SpatialWaveletAnalysis.h"
+	#include "FireDetector/Config.h"
+#endif
+
 #include "ini_parser/iniparser.h"
 
-#include <tr1/functional>
+
 
 
 static void* run(void* arg);
+#if RUN_CPP
+	static FireDetector* objFireDetector;
+	static cv::VideoCapture capture_;
+#else
 static CvCapture* capture;
+#endif
+
 static int fireThreshold=0;
 FireThread::FireThread()
 {
 	// TODO Auto-generated constructor stub
-
+	initFireThread();
 }
 
 FireThread::~FireThread()
 {
 	// TODO Auto-generated destructor stub
+	pthread_cancel(fireThread);
 }
-
-static void* run_(void* arg)
+#if RUN_CPP
+static void* run(void* arg)
 {
 	FireThread* fireObj = (FireThread*)arg;
-	// create a buff with pointer link
+	int elapsedFrame = 0;
 	cv::Mat frame;
-	cv::Mat ptrFrameBuffer[FRAME_BUFFER_SIZE];
-	cv::Mat movingMap;
-	cv::Mat MaskOfIdxFirePoints;
-	cv::Mat setOfFlickerPoints;
-	cv::Mat MaskOfIdxFireColoredPoints;
-	cv::Mat temp;
-	cv::Mat Y_image;
-	cv::Mat test_image;
-	char c;
-	int i,j;
-	int convertColorCode = 0;
-	int frameWidth, frameHeigh;
-	unsigned char MovingThreshold = 0;
-	float row_avg = 0;
-	float radius_row = 0;
-	float col_avg = 0;
-	float radius_col = 0;
-	int countTemp = 0;
-	int window_size_row_min = 0;
-	int window_size_row_max = 0;
-	int window_size_col_min = 0;
-	int window_size_col_max = 0;
-}
+	while(true)
+	{
+		if(!capture_.read(frame))
+		{
+			std::cout << "[Run Loop]Cannot read frame" << std::endl;
+		}
+		int firePixel = objFireDetector->getFirePixelNumber(frame);
+		if(firePixel>fireThreshold)
+		{
+			//count the frame that contains firePixel surpass threshold
+			std::cout << elapsedFrame << " firePixel: " << firePixel << std::endl;
+			elapsedFrame++;
+			if(elapsedFrame > 30)//if more than sth, then fire
+			{
+				elapsedFrame = 0;
+				(fireObj->fireDetected)(fireObj->handler);
+			}
+		}
+		int c = waitKey(DELAY_TIME);
+		if( c == 'q' )
+		{
+			break;
+		}
+		else if(c=='f')
+		{
+			//(fireObj->fireDetected)(fireObj->handler);
 
+		}
+		else
+		{
+			//do nothing
+		}
+		usleep(1);
+	}
+	std::cout << "[FireThread]Terminate FireThread routine" << std::endl;
+	return NULL;
+}
+#else
 static void* run(void* arg)
 {
 	FireThread* fireObj = (FireThread*)arg;
@@ -343,10 +373,12 @@ static void* run(void* arg)
 	//	}
 	return NULL;
 }
+#endif
 
 void FireThread::startFireThread()
 {
-	if( pthread_create(&fireThread,NULL,run,(void*)this)!=0)
+	//if( pthread_create(&fireThread,NULL,run,(void*)this)!=0)
+	if( pthread_create(&fireThread,NULL,run,(void*)this)!=0) //using myCode
 	{
 		std::cout << "Fail to create fireThread" << std::endl;
 	}
@@ -367,13 +399,19 @@ void FireThread::initFireThread()
 	src_str = iniparser_getstring(ini,"fire_detector:source", "Resources/outdoor_daytime_10m_heptane_CCD_001.avi");
 	fireThreshold = iniparser_getint(ini, "fire_detector:threshold",10);
 	iniparser_freedict(ini);
+#if RUN_CPP
+	objFireDetector = new FireDetector();
+	capture_ = cv::VideoCapture(src_str);
+	if(!capture_.isOpened())
+#else
 	capture = cvCaptureFromFile(src_str.c_str());
 	if(!capture)
+#endif
 	{
 		std::cout << "Cannot open video source!" << std::endl;
 	}
-	this->fireDetected = NULL;
 
+	this->fireDetected = NULL;
 }
 
 void FireThread::joinFireThread()

@@ -23,11 +23,13 @@ using namespace std;
 
 ServerThread::ServerThread() {
 	// TODO Auto-generated constructor stub
+	initServerThread();
 
 }
 
 ServerThread::~ServerThread() {
 	// TODO Auto-generated destructor stub
+	pthread_cancel(serverThread);
 }
 
 void ServerThread::startServerThread() {
@@ -75,6 +77,12 @@ static void* run(void* arg)
 						buffer[1] = 0x55;
 						buffer[2] = 0x00;
 						buffer[3] = (counter++);
+//						while(!obj->hasFire)
+//						{
+//							std::cout << "[ServerThread] Run but no signal" << std::endl;
+//							pthread_cond_wait(&(obj->serverCond), &(obj->serverMutex));
+//						}
+						pthread_mutex_trylock(&(obj->serverMutex));
 						if(obj->hasFire)
 						{
 							buffer[4] = 0x01;
@@ -86,13 +94,14 @@ static void* run(void* arg)
 						}
 //						bool sendOK = sendToSocket.send(buffer, 5);
 						sendToSocket.send( (char*)buffer, 5);
+						pthread_mutex_unlock(&(obj->serverMutex));
 
-						cout << "Client sent: " ;
-						for(int i=0;i<5;i++)
-						{
-							printf("%2.2x ", buffer[i]);
-						}
-						cout << endl;
+//						cout << "Client sent: " ;
+//						for(int i=0;i<5;i++)
+//						{
+//							printf("%2.2x ", buffer[i]);
+//						}
+//						cout << endl;
 
 
 					}
@@ -115,11 +124,14 @@ static void* run(void* arg)
 }
 
 void ServerThread::sendAlarm() {
-	pthread_mutex_lock(&serverMutex);
-//	std::cout << "Callback to ServerThread's function" << std::endl;
-	hasFire = true;
-	pthread_mutex_unlock(&serverMutex);
-//	pthread_cond_signal(&serverCond);
+//	if(!hasFire)
+	{
+		pthread_mutex_lock(&serverMutex);
+		std::cout << "Callback to ServerThread's function" << std::endl;
+		hasFire = true;
+		pthread_mutex_unlock(&serverMutex);
+//		pthread_cond_signal(&serverCond);
+	}
 }
 
 void ServerThread::handleFireDetected(void* arg)
