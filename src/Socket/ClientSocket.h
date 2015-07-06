@@ -16,6 +16,9 @@ class ClientSocket : public Socket
   const ClientSocket& operator << ( const std::string& ) const;
   const ClientSocket& operator >> ( std::string& ) const;
 
+//  const ClientSocket& operator << ( const char* ) const;
+//  const ClientSocket& operator >> ( char* ) const;
+
 };
 
 

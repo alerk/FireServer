@@ -39,7 +39,7 @@ class Socket
   int recv_string ( std::string& ) const;
 
   bool send (const char* send_buff, int size) const;
-  int recv(char* recv_buff) const;
+  int recv(char* recv_buff, int size ) const;
 
 
   void set_non_blocking ( const bool );

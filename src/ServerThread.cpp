@@ -16,9 +16,10 @@
 #include "ini_parser/iniparser.h"
 #define SERVER_PORT 13579
 static void* run(void* arg);
+bool hasFire, hasIntruder;
 
 static unsigned char counter = 0;
-static int serverPort = 0;
+static int server_port = 0;
 using namespace std;
 
 ServerThread::ServerThread() {
@@ -48,7 +49,7 @@ void ServerThread::initServerThread() {
 		fprintf(stderr, "[serverThread]cannot parse file\n");
 		return;
 	}
-	serverPort = iniparser_getint(ini, "server_thread:port",12345);
+	server_port = iniparser_getint(ini, "server_thread:port",12345);
 	iniparser_freedict(ini);
 }
 
@@ -61,7 +62,7 @@ static void* run(void* arg)
 	ServerThread* obj = (ServerThread*)arg;
 	try{
 
-		ServerSocket listenServer(serverPort);
+		ServerSocket listenServer(server_port);
 		while(true)
 			{
 				ServerSocket sendToSocket;
@@ -83,10 +84,16 @@ static void* run(void* arg)
 //							pthread_cond_wait(&(obj->serverCond), &(obj->serverMutex));
 //						}
 						pthread_mutex_trylock(&(obj->serverMutex));
-						if(obj->hasFire)
+						//if(obj->hasFire)
+						if(hasFire)
 						{
 							buffer[4] = 0x01;
-							obj->hasFire = false;
+							hasFire = false;
+						}
+						else if(hasIntruder)
+						{
+							buffer[4] = 0x02;
+							hasIntruder = false;
 						}
 						else
 						{
@@ -123,20 +130,40 @@ static void* run(void* arg)
 
 }
 
-void ServerThread::sendAlarm() {
-//	if(!hasFire)
+void ServerThread::sendAlarm(int type) {
+	pthread_mutex_lock(&serverMutex);
+	switch(type)
 	{
-		pthread_mutex_lock(&serverMutex);
-		std::cout << "Callback to ServerThread's function" << std::endl;
-		hasFire = true;
-		pthread_mutex_unlock(&serverMutex);
-//		pthread_cond_signal(&serverCond);
+		case 0://Fire
+	//	if(!hasFire)
+		{
+			std::cout << "Fire Callback to ServerThread's function" << std::endl;
+			hasFire = true;
+	//		pthread_cond_signal(&serverCond);
+		}
+		break;
+		case 1://Intruder
+		{
+			std::cout << "Intruder Callback to ServerThread's function" << std::endl;
+			hasIntruder = true;
+		}
+			break;
+		default:
+			break;
 	}
+	pthread_mutex_unlock(&serverMutex);
 }
 
 void ServerThread::handleFireDetected(void* arg)
 {
 	ServerThread* objServer = (ServerThread*)arg;
-	objServer->sendAlarm();
+	objServer->sendAlarm(0);
+
+}
+
+void ServerThread::handleIntruderDetected(void* arg)
+{
+	ServerThread* objServer = (ServerThread*)arg;
+	objServer->sendAlarm(1);
 
 }

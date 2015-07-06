@@ -242,12 +242,13 @@ bool Socket::send(const char* send_buff, int size) const {
 
 }
 
-int Socket::recv(char* recv_buff) const {
+int Socket::recv(char* recv_buff, int size = MAXRECV) const {
 	char buf [ MAXRECV + 1 ];
 
 	std::string s = "";
 
 	memset ( buf, 0, MAXRECV + 1 );
+
 
 	if (DEBUG)
 	{
@@ -255,6 +256,11 @@ int Socket::recv(char* recv_buff) const {
 	}
 
 	int status = ::recv ( m_sock, buf, MAXRECV, 0 );
+	if(size>status)
+	{
+		size = status;
+	}
+	memcpy(recv_buff, buf, size);
 
 	if (DEBUG)
 	{
@@ -276,16 +282,17 @@ int Socket::recv(char* recv_buff) const {
 		{
 			cout << "m_sock " << m_sock << " recv and s = " << s << endl;
 		}
+
 		return 0;
 	}
 	else
 	{
-		s = buf;
+		//s = buf;
 		if (DEBUG)
 		{
 			cout << "m_sock " << m_sock << " recv and s = " << s << endl;
 		}
-		memcpy(recv_buff, buf, status);
+
 		return status;
 	}
 }

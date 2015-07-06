@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include "FireThread.h"
 #include "ServerThread.h"
+#include "IntruderThread.h"
 
 class MainThread {
 public:
@@ -23,6 +24,7 @@ private:
 
 	FireThread* fireObj;
 	ServerThread* serverObj;
+	IntruderThread* intruderObj;
 
 public:
 	void startMainThread();

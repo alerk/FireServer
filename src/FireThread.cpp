@@ -91,7 +91,7 @@ static void* run(void* arg)
 		{
 			//do nothing
 		}
-		usleep(1);
+//		usleep(1);
 	}
 	std::cout << "[FireThread]Terminate FireThread routine" << std::endl;
 	return NULL;

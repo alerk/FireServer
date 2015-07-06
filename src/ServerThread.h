@@ -20,13 +20,14 @@ public:
 
 
 public:
-	bool hasFire;
+//	bool hasFire;
 	void startServerThread();
 	void initServerThread();
 	void joinServerThread();
 	static void handleFireDetected(void* arg);
+	static void handleIntruderDetected(void* arg);
 
-	void sendAlarm();
+	void sendAlarm(int type);
 };
 
 #endif /* SOURCE_RESULTSERVERTHREAD_H_ */

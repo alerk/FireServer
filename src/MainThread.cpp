@@ -21,6 +21,7 @@ MainThread::~MainThread() {
 	// TODO Auto-generated destructor stub
 	delete(fireObj);
 	delete(serverObj);
+	delete(intruderObj);
 	pthread_cancel(mainThread);
 }
 
@@ -38,9 +39,12 @@ void MainThread::initMainThread() {
 	//fireObj->initFireThread();
 	serverObj = new ServerThread();
 	//serverObj->initServerThread();
+	intruderObj = new IntruderThread();
 
-	//assign callbac from fireObj to serverObj
+	//assign callback from fireObj to serverObj
 	fireObj->connectCallback(ServerThread::handleFireDetected, serverObj);
+	intruderObj->connectCallback(ServerThread::handleIntruderDetected, serverObj);
+
 }
 
 void MainThread::joinMainThread() {
