@@ -6,6 +6,7 @@
 CPP_SRCS += \
 ../src/FireServer.cpp \
 ../src/FireThread.cpp \
+../src/IntruderThread.cpp \
 ../src/MainThread.cpp \
 ../src/ServerThread.cpp \
 ../src/main.cpp 
@@ -13,6 +14,7 @@ CPP_SRCS += \
 OBJS += \
 ./src/FireServer.o \
 ./src/FireThread.o \
+./src/IntruderThread.o \
 ./src/MainThread.o \
 ./src/ServerThread.o \
 ./src/main.o 
@@ -20,6 +22,7 @@ OBJS += \
 CPP_DEPS += \
 ./src/FireServer.d \
 ./src/FireThread.d \
+./src/IntruderThread.d \
 ./src/MainThread.d \
 ./src/ServerThread.d \
 ./src/main.d 

@@ -10,19 +10,21 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "Socket/ClientSocket.h"
+#include "Socket/SocketException.h"
+#include "ini_parser/iniparser.h"
 
-#define DEFAULT_IP "192.168.100.103"
-#define DEFAULT_PORT 112233
+#define DEFAULT_IP 		"192.168.100.103"
+#define DEFAULT_PORT 	112233
 
 using namespace std;
 static void* run(void* arg);
 
-	pthread_t 		intruderThread;
-	pthread_mutex_t intruderMutex;
-	pthread_cond_t 	intruderCond;
+pthread_t 		intruderThread;
+pthread_mutex_t intruderMutex;
+pthread_cond_t 	intruderCond;
 
-	static std::string src_str;
-	static int src_port;
+static std::string src_str;
+static int src_port;
 
 
 IntruderThread::IntruderThread()
@@ -35,33 +37,31 @@ IntruderThread::IntruderThread()
 IntruderThread::~IntruderThread()
 {
 	// TODO Auto-generated destructor stub
-	pthread_cancel(fireThread);
+	pthread_cancel(intruderThread);
 }
 
 void IntruderThread::startIntruderThread()
 {
 	if( pthread_create(&intruderThread,NULL,run,(void*)this)!=0) //using myCode
-		{
-			std::cout << "Fail to create intruderThread" << std::endl;
-		}
+	{
+		std::cout << "Fail to create intruderThread" << std::endl;
+	}
 }
 
 void IntruderThread::initIntruderThread()
 {
-	//init the video source here - prepare for multiple inputs
-			dictionary* ini;
-//			std::string src_str;
-//			int src_port;
-			ini = iniparser_load("Resources/FireServer.conf");
-			if(ini==NULL)
-			{
-				fprintf(stderr, "cannot parse file\n");
-				return;
-			}
+	//init the intruder source here - prepare for multiple inputs
+	dictionary* ini;
+	ini = iniparser_load("Resources/FireServer.conf");
+	if(ini==NULL)
+	{
+		cout << "cannot parse file" << endl;
+		return;
+	}
 
-			src_str = iniparser_getstring(ini,"intruder_detector:source", DEFAULT_IP);
-			src_port = iniparser_getint(ini, "intruder_detector:port",DEFAULT_PORT);
-			iniparser_freedict(ini);
+	src_str = iniparser_getstring(ini,"intruder_detector:source", DEFAULT_IP);
+	src_port = iniparser_getint(ini, "intruder_detector:port",DEFAULT_PORT);
+	iniparser_freedict(ini);
 }
 
 void IntruderThread::joinIntruderThread()
@@ -78,14 +78,13 @@ void IntruderThread::connectCallback(CallbackPtr cb, void* cbHandler)
 static void* run(void* arg)
 {
 	IntruderThread* obj = (IntruderThread*)arg;
-	ClientSocket client;
 	char recv_buf[5];
 	while(true)
 	{
 		try
 		{
 			//connect to the socket to get intruder data; this obj is client
-			client = ClientSocket(src_str, src_port);
+			ClientSocket client = ClientSocket(src_str, src_port);
 			//if yes, then notify the ServerObj
 			while(true)
 			{
@@ -94,17 +93,17 @@ static void* run(void* arg)
 				{
 					throw SocketException ( "Could not read from socket." );
 				}
-//				printf("Receiving %d bytes from server:", recv_size);
-//				for(int i=0;i<5;i++)
-//				{
-//					printf("%2.2x",(char)recv_buf[i]);
-//				}
+				//				printf("Receiving %d bytes from server:", recv_size);
+				//				for(int i=0;i<5;i++)
+				//				{
+				//					printf("%2.2x",(char)recv_buf[i]);
+				//				}
 				if(recv_buf[4]==0x01)
 				{
 					cout << "\t ====> Intruder!" << endl;
 					(obj->intruderDetected)(obj->handler);
 				}
-//				printf("\n");
+				//				printf("\n");
 			}
 		}
 		catch(SocketException &ex)
@@ -112,7 +111,6 @@ static void* run(void* arg)
 			cout << "Error " << ex.description() << endl;
 			sleep(1);
 		}
-
 	}
 	return NULL;
 }

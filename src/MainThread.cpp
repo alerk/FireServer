@@ -32,6 +32,7 @@ void MainThread::startMainThread() {
 	}
 	fireObj->startFireThread();
 	serverObj->startServerThread();
+	intruderObj->startIntruderThread();
 }
 
 void MainThread::initMainThread() {
@@ -50,6 +51,7 @@ void MainThread::initMainThread() {
 void MainThread::joinMainThread() {
 	fireObj->joinFireThread();
 	serverObj->joinServerThread();
+	intruderObj->joinIntruderThread();
 	pthread_join(mainThread, NULL);
 }
 
