@@ -5,19 +5,35 @@
  *      Author: nguyen
  */
 
-#include <vector>
-#include <stdarg.h>
 #include "FireDetector.h"
+#include <stdarg.h>
 #include <iostream>
+#include <stdio.h>
 
 #define GAP 10
 #define SIZE_1 360
 #define SIZE_2 320
 #define SIZE_3 280
 
+#define DELAY_TIME_US 30000
+
+void* run(void* arg);
+
 FireDetector::FireDetector()
 {
 	// TODO Auto-generated constructor stub
+
+}
+
+FireDetector::FireDetector(int id, std::string name, std::string input, int threshold) {
+	sourceId = id;
+	sourceName = name;
+	sourceVideo = input;
+	fireThreshold = threshold;
+
+	init();
+	start();
+	//join();
 
 }
 
@@ -106,9 +122,27 @@ int FireDetector::getFirePixelNumber(Mat frame) {
 	cvtColor(Cr_Cb, Cr_Cb, CV_GRAY2BGR);
 	cvtColor(colorMask, colorMask, CV_GRAY2BGR);
 
-	cvShowManyImages("Frames", frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
+	char wName[25];
+	sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
+	//cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
+	imshow(wName, frame);
+	if(fireCount>fireThreshold)
+	{
+		//count the frame that contains firePixel surpass threshold
+		hasFire = true;
+	}
+	else
+	{
+		hasFire = false;
+	}
 
 	return fireCount;
+}
+
+
+
+int FireDetector::getFirePixelNumber(std::string input)
+{
 }
 
 void FireDetector::cvShowManyImages(char* title, int s_cols, int s_rows,
@@ -234,4 +268,42 @@ void FireDetector::cvShowManyImages(char* title, int s_cols, int s_rows,
 
 	// End the number of arguments
 	va_end(args);
+}
+
+void* run(void* arg)
+{
+	FireDetector* obj = (FireDetector*)arg;
+	cv::Mat aFrame;
+	while(true)
+	{
+		if(!obj->capture.read(aFrame))
+		{
+			std::cout << "[Run Loop]Cannot read frame" << std::endl;
+		}
+		int firePixel = obj->getFirePixelNumber(aFrame);
+//
+		usleep(30000);
+	}
+}
+
+void FireDetector::init()
+{
+	capture = cv::VideoCapture(sourceVideo);
+	if(!capture.isOpened())
+	{
+		std::cout << "Cannot open video source!" << std::endl;
+	}
+}
+
+void FireDetector::start()
+{
+	if( pthread_create(&runThread,NULL,run,(void*)this)!=0) //using myCode
+	{
+		std::cout << "Fail to create fireThread" << std::endl;
+	}
+}
+
+void FireDetector::join()
+{
+	pthread_join(runThread, NULL);
 }

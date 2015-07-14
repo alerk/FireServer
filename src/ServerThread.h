@@ -24,8 +24,8 @@ public:
 	void startServerThread();
 	void initServerThread();
 	void joinServerThread();
-	static void handleFireDetected(void* arg);
-	static void handleIntruderDetected(void* arg);
+	static void handleFireDetected(void* arg, int source);
+	static void handleIntruderDetected(void* arg, int source);
 
 	void sendAlarm(int type);
 };

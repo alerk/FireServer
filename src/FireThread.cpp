@@ -8,7 +8,10 @@
 #include "FireThread.h"
 #include <iostream>
 #include <unistd.h>
+#include <stdio.h>
+#include <vector>
 
+#include "CommonDefine.h"
 
 #define DELAY_TIME 20
 #define RUN_CPP 1
@@ -30,16 +33,15 @@
 
 #include "ini_parser/iniparser.h"
 
-
-
-
-static void* run(void* arg);
+void* runFireThread(void* arg);
 #if RUN_CPP
-	static FireDetector* objFireDetector;
-	static cv::VideoCapture capture_;
+	FireDetector* objFireDetector;
+	cv::VideoCapture capture_;
+	std::vector<FireDetector*> vectorDetector;
 #else
 static CvCapture* capture;
 #endif
+
 
 static int fireThreshold=0;
 FireThread::FireThread()
@@ -54,10 +56,11 @@ FireThread::~FireThread()
 	pthread_cancel(fireThread);
 }
 #if RUN_CPP
-static void* run(void* arg)
+void* runFireThread(void* arg)
 {
 	FireThread* fireObj = (FireThread*)arg;
 	int elapsedFrame = 0;
+#ifdef RUN_ONE_CAM
 	cv::Mat frame;
 	while(true)
 	{
@@ -94,10 +97,45 @@ static void* run(void* arg)
 //		usleep(1);
 	}
 	std::cout << "[FireThread]Terminate FireThread routine" << std::endl;
+#else
+	while(true)
+	{
+		for(std::vector<FireDetector*>::iterator it = vectorDetector.begin(); it != vectorDetector.end(); ++it)
+		{
+			if((*it)->hasFire)
+			{
+				elapsedFrame++;
+				if(elapsedFrame > 30)//if more than sth, then fire
+				{
+					elapsedFrame = 0;
+					(fireObj->fireDetected)(fireObj->handler, (*it)->getSourceId());
+				}
+			}
+		}
+
+
+		//-------------ending----------------//
+		int c = waitKey(DELAY_TIME);
+		if( c == 'q' )
+		{
+			break;
+		}
+		else if(c=='f')
+		{
+			//(fireObj->fireDetected)(fireObj->handler);
+
+		}
+		else
+		{
+			//do nothing
+		}
+		sleep(1);
+	}
+#endif
 	return NULL;
 }
 #else
-static void* run(void* arg)
+void* runFireThread(void* arg)
 {
 	FireThread* fireObj = (FireThread*)arg;
 	// create a buff with pointer link
@@ -378,7 +416,7 @@ static void* run(void* arg)
 void FireThread::startFireThread()
 {
 	//if( pthread_create(&fireThread,NULL,run,(void*)this)!=0)
-	if( pthread_create(&fireThread,NULL,run,(void*)this)!=0) //using myCode
+	if( pthread_create(&fireThread,NULL,runFireThread,(void*)this)!=0) //using myCode
 	{
 		std::cout << "Fail to create fireThread" << std::endl;
 	}
@@ -387,6 +425,7 @@ void FireThread::startFireThread()
 void FireThread::initFireThread()
 {
 	//init the video source here - prepare for multiple inputs
+#ifdef RUN_ONE_CAM
 	dictionary* ini;
 	std::string src_str;
 	ini = iniparser_load("Resources/FireServer.conf");
@@ -410,7 +449,33 @@ void FireThread::initFireThread()
 	{
 		std::cout << "Cannot open video source!" << std::endl;
 	}
-
+#else
+	dictionary* ini;
+	std::string src_str[MAX_NUMBER_OF_INPUT];
+	ini = iniparser_load("Resources/FireServer.conf");
+	if(ini==NULL)
+	{
+		fprintf(stderr, "cannot parse file\n");
+		return;
+	}
+	int num_of_source = iniparser_getint(ini, "fire_detector:num_of_source",1);
+	if(num_of_source>MAX_NUMBER_OF_INPUT)
+	{
+		num_of_source = MAX_NUMBER_OF_INPUT;
+	}
+	for(int i=0;i<num_of_source;i++)
+	{
+		char temp[10], temp_src[50], temp_threshold[30];
+		sprintf(&(temp[0]), "source_%d", i);
+		sprintf(&(temp_src[0]), "source_%d:source", i);
+		sprintf(&(temp_threshold[0]), "source_%d:threshold", i);
+		std::string source = iniparser_getstring(ini,temp_src,"Resources/usnMR6I_EAQ.mp4");
+		int threshold = iniparser_getint(ini, temp_threshold, 10);
+		FireDetector* fireDet = new FireDetector(i, temp, source, threshold);
+		vectorDetector.push_back(fireDet);
+	}
+	iniparser_freedict(ini);
+#endif
 	this->fireDetected = NULL;
 }
 

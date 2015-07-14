@@ -8,7 +8,7 @@
 #ifndef SRC_INTRUDERTHREAD_H_
 #define SRC_INTRUDERTHREAD_H_
 
-typedef void (*CallbackPtr)(void*);
+typedef void (*CallbackPtr)(void*, int);
 
 class IntruderThread {
 public:

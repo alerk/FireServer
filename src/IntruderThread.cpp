@@ -12,6 +12,7 @@
 #include "Socket/ClientSocket.h"
 #include "Socket/SocketException.h"
 #include "ini_parser/iniparser.h"
+#include "CommonDefine.h"
 
 #define DEFAULT_IP 		"192.168.100.103"
 #define DEFAULT_PORT 	112233
@@ -101,7 +102,7 @@ static void* run(void* arg)
 				if(recv_buf[4]==0x01)
 				{
 					cout << "\t ====> Intruder!" << endl;
-					(obj->intruderDetected)(obj->handler);
+					(obj->intruderDetected)(obj->handler, SRC_INTRUDER);
 				}
 				//				printf("\n");
 			}

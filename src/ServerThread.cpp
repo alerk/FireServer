@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "ini_parser/iniparser.h"
+#include "CommonDefine.h"
 #define SERVER_PORT 13579
 static void* run(void* arg);
 bool hasFire, hasIntruder;
@@ -135,6 +136,9 @@ void ServerThread::sendAlarm(int type) {
 	switch(type)
 	{
 		case 0://Fire
+		case 1:
+		case 2:
+		case 3:
 	//	if(!hasFire)
 		{
 			std::cout << "Fire Callback to ServerThread's function" << std::endl;
@@ -142,7 +146,7 @@ void ServerThread::sendAlarm(int type) {
 	//		pthread_cond_signal(&serverCond);
 		}
 		break;
-		case 1://Intruder
+		case SRC_INTRUDER://Intruder
 		{
 			std::cout << "Intruder Callback to ServerThread's function" << std::endl;
 			hasIntruder = true;
@@ -154,16 +158,16 @@ void ServerThread::sendAlarm(int type) {
 	pthread_mutex_unlock(&serverMutex);
 }
 
-void ServerThread::handleFireDetected(void* arg)
+void ServerThread::handleFireDetected(void* arg, int source)
 {
 	ServerThread* objServer = (ServerThread*)arg;
-	objServer->sendAlarm(0);
+	objServer->sendAlarm(source);
 
 }
 
-void ServerThread::handleIntruderDetected(void* arg)
+void ServerThread::handleIntruderDetected(void* arg, int source)
 {
 	ServerThread* objServer = (ServerThread*)arg;
-	objServer->sendAlarm(1);
+	objServer->sendAlarm(source);
 
 }

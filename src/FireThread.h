@@ -8,9 +8,9 @@
 #ifndef SOURCE_FIREDETECTORTHREAD_H_
 #define SOURCE_FIREDETECTORTHREAD_H_
 #include <pthread.h>
-#include <tr1/functional>
+#define MAX_NUMBER_OF_INPUT 10
 
-typedef void (*CallbackPtr)(void*);
+typedef void (*CallbackPtr)(void*, int);
 
 class FireThread {
 public:
@@ -21,6 +21,10 @@ private:
 	pthread_t 		fireThread;
 	pthread_mutex_t fireMutex;
 	pthread_cond_t 	fireCond;
+
+	bool result[MAX_NUMBER_OF_INPUT];
+
+
 public:
 	void 			startFireThread();
 	void 			initFireThread();
@@ -28,8 +32,6 @@ public:
 	CallbackPtr 	fireDetected;
 	void*			handler;//Actual object that handles the call
 	void 			connectCallback(CallbackPtr cb, void* cbHandler);
-//	std::tr1::function <void (void)> fireDetected;//callback pointer
-	//static void (FireThread::*fireDetected)(void);//quyen callback
 };
 
 #endif /* SOURCE_FIREDETECTORTHREAD_H_ */
