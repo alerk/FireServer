@@ -42,8 +42,6 @@ void* runFireThread(void* arg);
 static CvCapture* capture;
 #endif
 
-
-static int fireThreshold=0;
 FireThread::FireThread()
 {
 	// TODO Auto-generated constructor stub

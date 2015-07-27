@@ -86,19 +86,16 @@ static void* run(void* arg)
 //						}
 						pthread_mutex_trylock(&(obj->serverMutex));
 						//if(obj->hasFire)
+						buffer[4] = 0x00;
 						if(hasFire)
 						{
-							buffer[4] = 0x01;
+							buffer[4] |= (0x01 << 0);
 							hasFire = false;
 						}
-						else if(hasIntruder)
+						if(hasIntruder)
 						{
-							buffer[4] = 0x02;
+							buffer[4] |= (0x01 << 1);
 							hasIntruder = false;
-						}
-						else
-						{
-							buffer[4] = 0x00;
 						}
 //						bool sendOK = sendToSocket.send(buffer, 5);
 						sendToSocket.send( (char*)buffer, 5);

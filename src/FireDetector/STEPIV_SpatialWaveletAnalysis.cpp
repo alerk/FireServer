@@ -44,7 +44,7 @@ int isFireRegion(IplImage * originalImgae) /* OriginalImage should be single Cha
 	//int ncol = originalImgae->width;
 	int r,c,i;
 	int row_index,col_index;
-	if (originalImgae->imageData == NULL)
+	if (originalImgae->imageData == '\0')
 	{
 		return 0;
 	}

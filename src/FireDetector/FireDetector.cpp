@@ -9,27 +9,28 @@
 #include <stdarg.h>
 #include <iostream>
 #include <stdio.h>
+#include <queue>
+#include  <ctime>
 
 #define GAP 10
 #define SIZE_1 360
 #define SIZE_2 320
 #define SIZE_3 280
 
-#define DELAY_TIME_US 30000
+#define DELAY_TIME_MS 30
 
-void* run(void* arg);
-
-FireDetector::FireDetector()
-{
-	// TODO Auto-generated constructor stub
-
-}
+//void* run(void* arg);
+std::queue<unsigned char*> frameQueue;
 
 FireDetector::FireDetector(int id, std::string name, std::string input, int threshold) {
 	sourceId = id;
 	sourceName = name;
 	sourceVideo = input;
 	fireThreshold = threshold;
+
+	char wName[25];
+	sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
+	namedWindow(wName);
 
 	init();
 	start();
@@ -100,10 +101,10 @@ int FireDetector::getFirePixelNumber(Mat frame) {
 	CbChannel = channels[2];
 
 	//calculate mean of 3 channels: => for further use
-	unsigned char Y_mean, Cr_mean, Cb_mean;
-	Y_mean = (unsigned char)mean(YChannel)[0];
-	Cr_mean = (unsigned char)mean(CrChannel)[0];
-	Cb_mean = (unsigned char)mean(CbChannel)[0];
+//	unsigned char Y_mean, Cr_mean, Cb_mean;
+//	Y_mean = (unsigned char)mean(YChannel)[0];
+//	Cr_mean = (unsigned char)mean(CrChannel)[0];
+//	Cb_mean = (unsigned char)mean(CbChannel)[0];
 
 	colorMask = Mat(frame.rows, frame.cols, CV_8UC1);
 	Y_Cb  = Mat(frame.rows, frame.cols, CV_8UC1);//YChannel minus CbChannel
@@ -124,8 +125,8 @@ int FireDetector::getFirePixelNumber(Mat frame) {
 
 	char wName[25];
 	sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
-	//cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
-	imshow(wName, frame);
+	cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
+	//imshow(wName, frame);
 	if(fireCount>fireThreshold)
 	{
 		//count the frame that contains firePixel surpass threshold
@@ -139,11 +140,6 @@ int FireDetector::getFirePixelNumber(Mat frame) {
 	return fireCount;
 }
 
-
-
-int FireDetector::getFirePixelNumber(std::string input)
-{
-}
 
 void FireDetector::cvShowManyImages(char* title, int s_cols, int s_rows,
 		int nArgs,...)
@@ -270,21 +266,49 @@ void FireDetector::cvShowManyImages(char* title, int s_cols, int s_rows,
 	va_end(args);
 }
 
-void* run(void* arg)
+//void* run(void* arg)
+//{
+//	FireDetector* obj = (FireDetector*)arg;
+//	cv::Mat aFrame;
+//	while(true)
+//	{
+//		if(!obj->capture.read(aFrame))
+//		{
+//			std::cout << "[Run Loop]Cannot read frame" << std::endl;
+//		}
+//		int firePixel = obj->getFirePixelNumber(aFrame);
+//		usleep(DELAY_TIME_US);
+//	}
+//}
+
+void* FireDetector::run(void* arg)
 {
 	FireDetector* obj = (FireDetector*)arg;
 	cv::Mat aFrame;
 	while(true)
 	{
-		if(!obj->capture.read(aFrame))
+		pthread_mutex_trylock(&obj->runMutex);
+		while(frameQueue.empty())
 		{
-			std::cout << "[Run Loop]Cannot read frame" << std::endl;
+			pthread_cond_wait(&obj->runCond, &obj->runMutex);
 		}
-		int firePixel = obj->getFirePixelNumber(aFrame);
-//
-		usleep(30000);
+		while(!frameQueue.empty())
+		{
+			unsigned char* data = (unsigned char*)frameQueue.front();
+			frameQueue.pop();
+			cv::Mat img = cv::Mat( obj->getImgHeight(), obj->getImgWidth(), CV_8UC3, data);
+			int start_s=clock();
+			int firePixel = obj->getFirePixelNumber(img);//notification was send inside this function
+			int stop_s=clock();
+			std::cout << "time: " << (stop_s-start_s)/double(CLOCKS_PER_SEC)*1000 << std::endl;
+
+			free(data);
+		}
+		pthread_mutex_unlock(&obj->runMutex);
 	}
+	return NULL;
 }
+
 
 void FireDetector::init()
 {
@@ -297,13 +321,58 @@ void FireDetector::init()
 
 void FireDetector::start()
 {
-	if( pthread_create(&runThread,NULL,run,(void*)this)!=0) //using myCode
+	if( pthread_create(&runThread,NULL,FireDetector::run,(void*)this)!=0) //using myCode
 	{
 		std::cout << "Fail to create fireThread" << std::endl;
+	}
+	if( pthread_create(&captureThread,NULL,FireDetector::captureFrame,(void*)this)!=0) //using myCode
+	{
+		std::cout << "Fail to create captureThread" << std::endl;
 	}
 }
 
 void FireDetector::join()
 {
 	pthread_join(runThread, NULL);
+	pthread_join(captureThread, NULL);
+}
+
+void* FireDetector::captureFrame(void* arg)
+{
+	cv::Mat aFrame;
+	FireDetector* obj = (FireDetector*)arg;
+	while(true)
+	{
+		if(!(obj->capture).read(aFrame))
+		{
+			std::cout << "[Main FireDetector]Cannot read frame" << std::endl;
+			//break;
+		}
+		else
+		{
+			//std::cout << "[Main FireDetector]Copy to run thread" << std::endl;
+			//set image width and height
+			int w,h;
+			w = aFrame.cols;
+			h = aFrame.rows;
+			if(w!=obj->getImgWidth())
+			{
+				obj->setImgWidth(w);
+			}
+			if(h!=obj->getImgHeight())
+			{
+				obj->setImgHeight(h);
+			}
+			//queue the receive frame
+			pthread_mutex_lock(&obj->runMutex);
+			int data_size = aFrame.cols*aFrame.rows*aFrame.elemSize()*sizeof(char);
+			unsigned char* temp_data = (unsigned char*)malloc(data_size);
+			memcpy(temp_data, aFrame.data, data_size);
+			frameQueue.push(temp_data);
+			pthread_cond_signal(&obj->runCond);
+			pthread_mutex_unlock(&obj->runMutex);
+		}
+		usleep(DELAY_TIME_MS*1000);
+	}
+	return NULL;
 }
