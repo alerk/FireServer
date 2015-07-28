@@ -101,7 +101,7 @@ static void* run(void* arg)
 				//				}
 				if(recv_buf[4]==0x01)
 				{
-					cout << "\t ====> Intruder!" << endl;
+//					cout << "\t ====> Intruder!" << endl;
 					(obj->intruderDetected)(obj->handler, SRC_INTRUDER);
 				}
 				//				printf("\n");

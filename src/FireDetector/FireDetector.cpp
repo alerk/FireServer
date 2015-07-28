@@ -18,6 +18,7 @@
 #define SIZE_3 280
 
 #define DELAY_TIME_MS 30
+#define DUAL_THREAD 0
 
 //void* run(void* arg);
 std::queue<unsigned char*> frameQueue;
@@ -126,7 +127,7 @@ int FireDetector::getFirePixelNumber(Mat frame) {
 	char wName[25];
 	sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
 	cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
-	//imshow(wName, frame);
+//	imshow(wName, frame);
 	if(fireCount>fireThreshold)
 	{
 		//count the frame that contains firePixel surpass threshold
@@ -265,22 +266,7 @@ void FireDetector::cvShowManyImages(char* title, int s_cols, int s_rows,
 	// End the number of arguments
 	va_end(args);
 }
-
-//void* run(void* arg)
-//{
-//	FireDetector* obj = (FireDetector*)arg;
-//	cv::Mat aFrame;
-//	while(true)
-//	{
-//		if(!obj->capture.read(aFrame))
-//		{
-//			std::cout << "[Run Loop]Cannot read frame" << std::endl;
-//		}
-//		int firePixel = obj->getFirePixelNumber(aFrame);
-//		usleep(DELAY_TIME_US);
-//	}
-//}
-
+#if DUAL_THREAD
 void* FireDetector::run(void* arg)
 {
 	FireDetector* obj = (FireDetector*)arg;
@@ -294,6 +280,7 @@ void* FireDetector::run(void* arg)
 		}
 		while(!frameQueue.empty())
 		{
+			std::cout << "Queue not empty" << std::endl;
 			unsigned char* data = (unsigned char*)frameQueue.front();
 			frameQueue.pop();
 			cv::Mat img = cv::Mat( obj->getImgHeight(), obj->getImgWidth(), CV_8UC3, data);
@@ -301,13 +288,36 @@ void* FireDetector::run(void* arg)
 			int firePixel = obj->getFirePixelNumber(img);//notification was send inside this function
 			int stop_s=clock();
 			std::cout << "time: " << (stop_s-start_s)/double(CLOCKS_PER_SEC)*1000 << std::endl;
-
 			free(data);
 		}
 		pthread_mutex_unlock(&obj->runMutex);
 	}
 	return NULL;
 }
+#else
+void* FireDetector::run(void* arg)
+{
+	FireDetector* obj = (FireDetector*)arg;
+	cv::Mat aFrame;
+	while(true)
+	{
+		if(!obj->capture.read(aFrame))
+		{
+			std::cout << "[Run Loop]Cannot read frame" << std::endl;
+		}
+//		int start_s=clock();
+		int firePixel = obj->getFirePixelNumber(aFrame);
+//		int stop_s=clock();
+//		std::cout << "time(ms): " << (stop_s-start_s)/double(CLOCKS_PER_SEC)*1000 << std::endl;
+		char c = waitKey(DELAY_TIME_MS);
+		if(c=='q')
+		{
+			std::cout << "Try to quit by button" << std::endl;
+		}
+	}
+	return NULL;
+}
+#endif
 
 
 void FireDetector::init()
@@ -321,13 +331,16 @@ void FireDetector::init()
 
 void FireDetector::start()
 {
-	if( pthread_create(&runThread,NULL,FireDetector::run,(void*)this)!=0) //using myCode
-	{
-		std::cout << "Fail to create fireThread" << std::endl;
-	}
+#if DUAL_THREAD
 	if( pthread_create(&captureThread,NULL,FireDetector::captureFrame,(void*)this)!=0) //using myCode
 	{
 		std::cout << "Fail to create captureThread" << std::endl;
+	}
+#endif
+
+	if( pthread_create(&runThread,NULL,FireDetector::run,(void*)this)!=0) //using myCode
+	{
+		std::cout << "Fail to create fireThread" << std::endl;
 	}
 }
 
@@ -343,7 +356,7 @@ void* FireDetector::captureFrame(void* arg)
 	FireDetector* obj = (FireDetector*)arg;
 	while(true)
 	{
-		if(!(obj->capture).read(aFrame))
+		if(!(obj->capture).read(obj->frame))
 		{
 			std::cout << "[Main FireDetector]Cannot read frame" << std::endl;
 			//break;
@@ -365,14 +378,20 @@ void* FireDetector::captureFrame(void* arg)
 			}
 			//queue the receive frame
 			pthread_mutex_lock(&obj->runMutex);
-			int data_size = aFrame.cols*aFrame.rows*aFrame.elemSize()*sizeof(char);
+			int data_size = obj->frame.cols*obj->frame.rows*obj->frame.elemSize()*sizeof(char);
 			unsigned char* temp_data = (unsigned char*)malloc(data_size);
-			memcpy(temp_data, aFrame.data, data_size);
+			memcpy(temp_data, obj->frame.data, data_size);
 			frameQueue.push(temp_data);
+			std::cout << "Push to queue" << std::endl;
+//			imshow("Frame", obj->frame);
 			pthread_cond_signal(&obj->runCond);
 			pthread_mutex_unlock(&obj->runMutex);
 		}
-		usleep(DELAY_TIME_MS*1000);
+//		char c = waitKey(20);
+//		if(c=='q')
+//		{
+//			break;
+//		}
 	}
 	return NULL;
 }

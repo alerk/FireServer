@@ -138,14 +138,14 @@ void ServerThread::sendAlarm(int type) {
 		case 3:
 	//	if(!hasFire)
 		{
-			std::cout << "Fire Callback to ServerThread's function" << std::endl;
+//			std::cout << "Fire Callback to ServerThread's function" << std::endl;
 			hasFire = true;
 	//		pthread_cond_signal(&serverCond);
 		}
 		break;
 		case SRC_INTRUDER://Intruder
 		{
-			std::cout << "Intruder Callback to ServerThread's function" << std::endl;
+//			std::cout << "Intruder Callback to ServerThread's function" << std::endl;
 			hasIntruder = true;
 		}
 			break;
