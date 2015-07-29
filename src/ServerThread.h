@@ -17,6 +17,8 @@ public:
 	pthread_mutex_t serverMutex;
 	pthread_cond_t 	serverCond;
 
+	unsigned char hasFire, hasIntruder;
+
 
 
 public:

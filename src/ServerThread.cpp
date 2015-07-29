@@ -17,7 +17,7 @@
 #include "CommonDefine.h"
 #define SERVER_PORT 13579
 static void* run(void* arg);
-bool hasFire, hasIntruder;
+
 
 static unsigned char counter = 0;
 static int server_port = 0;
@@ -87,26 +87,26 @@ static void* run(void* arg)
 						pthread_mutex_trylock(&(obj->serverMutex));
 						//if(obj->hasFire)
 						buffer[4] = 0x00;
-						if(hasFire)
+						if(obj->hasFire>=0)
 						{
-							buffer[4] |= (0x01 << 0);
-							hasFire = false;
+							buffer[4] |= (0x01 << obj->hasFire);
+							obj->hasFire = -1;
 						}
-						if(hasIntruder)
+						if(obj->hasIntruder!=0)
 						{
-							buffer[4] |= (0x01 << 1);
-							hasIntruder = false;
+							buffer[4] |= (0x01 << obj->hasIntruder);
+							obj->hasIntruder = 0;
 						}
 //						bool sendOK = sendToSocket.send(buffer, 5);
 						sendToSocket.send( (char*)buffer, 5);
 						pthread_mutex_unlock(&(obj->serverMutex));
 
-//						cout << "Client sent: " ;
-//						for(int i=0;i<5;i++)
-//						{
-//							printf("%2.2x ", buffer[i]);
-//						}
-//						cout << endl;
+						cout << "Client sent: " ;
+						for(int i=0;i<5;i++)
+						{
+							printf("%2.2x ", (unsigned char)buffer[i]);
+						}
+						cout << endl;
 
 
 					}
@@ -115,7 +115,7 @@ static void* run(void* arg)
 						std::cout << "Error while accepting client " << e.description() << std::endl;
 						break;
 					}
-					sleep(1);
+					sleep(2);
 				}
 			}
 	}
@@ -139,14 +139,14 @@ void ServerThread::sendAlarm(int type) {
 	//	if(!hasFire)
 		{
 //			std::cout << "Fire Callback to ServerThread's function" << std::endl;
-			hasFire = true;
+			hasFire = type;
 	//		pthread_cond_signal(&serverCond);
 		}
 		break;
 		case SRC_INTRUDER://Intruder
 		{
 //			std::cout << "Intruder Callback to ServerThread's function" << std::endl;
-			hasIntruder = true;
+			hasIntruder = SRC_INTRUDER;
 		}
 			break;
 		default:

@@ -34,6 +34,7 @@
 #include "ini_parser/iniparser.h"
 
 void* runFireThread(void* arg);
+const bool DEBUG = true;
 #if RUN_CPP
 	FireDetector* objFireDetector;
 	cv::VideoCapture capture_;
@@ -449,8 +450,15 @@ void FireThread::initFireThread()
 	}
 #else
 	dictionary* ini;
-	std::string src_str[MAX_NUMBER_OF_INPUT];
-	ini = iniparser_load("Resources/FireServer.conf");
+	//std::string src_str[MAX_NUMBER_OF_INPUT];
+	if(DEBUG)
+	{
+		ini = iniparser_load("Resources/FireServer.conf");
+	}
+	else
+	{
+		ini = iniparser_load("./FireServer.conf");
+	}
 	if(ini==NULL)
 	{
 		fprintf(stderr, "cannot parse file\n");

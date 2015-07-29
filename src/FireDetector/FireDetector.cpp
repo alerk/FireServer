@@ -17,7 +17,7 @@
 #define SIZE_2 320
 #define SIZE_3 280
 
-#define DELAY_TIME_MS 30
+#define DELAY_TIME_MS 10
 #define DUAL_THREAD 0
 
 //void* run(void* arg);
@@ -301,9 +301,14 @@ void* FireDetector::run(void* arg)
 	cv::Mat aFrame;
 	while(true)
 	{
-		if(!obj->capture.read(aFrame))
+		obj->capture >> aFrame;
+//		if(!obj->capture.read(aFrame))
+		if(aFrame.empty())
 		{
 			std::cout << "[Run Loop]Cannot read frame" << std::endl;
+//			obj->capture.set(CV_CAP_PROP_POS_AVI_RATIO, 0);
+			//setCaptureProperty(capture, CV_CAP_PROP_POS_AVI_RATIO, 0);
+			continue;
 		}
 //		int start_s=clock();
 		int firePixel = obj->getFirePixelNumber(aFrame);
