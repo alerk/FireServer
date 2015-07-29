@@ -32,6 +32,7 @@ public:
 	CallbackPtr 	fireDetected;
 	void*			handler;//Actual object that handles the call
 	void 			connectCallback(CallbackPtr cb, void* cbHandler);
+	static void* 	runFireThread(void* arg);
 };
 
 #endif /* SOURCE_FIREDETECTORTHREAD_H_ */

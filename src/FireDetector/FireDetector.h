@@ -12,12 +12,15 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/video/background_segm.hpp>
 
+
 #include <pthread.h>
 #include <sys/time.h>       /* for setitimer */
 #include <unistd.h>     /* for pause */
 #include <signal.h>     /* for signal */
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "../DisplayThread.h"
 
 
 using namespace cv;
@@ -26,6 +29,7 @@ public:
 	FireDetector(int id, std::string name, std::string input, int threshold);
 	virtual ~FireDetector();
 	int getFirePixelNumber(Mat input);
+	int getFirePixelNumber(BackgroundSubtractorMOG2 bg, Mat frame, Mat back, Mat front);
 
 	int getSourceId() const {
 		return sourceId;
@@ -47,7 +51,15 @@ public:
 		this->imgWidth = imgWidth;
 	}
 
-	bool hasFire;
+	int getFireThreshold() const {
+		return fireThreshold;
+	}
+
+	void setSourceId(int sourceId) {
+		this->sourceId = sourceId;
+	}
+
+	bool isFire;
 	VideoCapture capture;
 
 	pthread_t 		captureThread;
@@ -55,11 +67,15 @@ public:
 	pthread_mutex_t runMutex;
 	pthread_cond_t 	runCond;
 
+	void init();
+	void start();
+
 private:
 	int sourceId;
 	std::string sourceName;
 	std::string sourceVideo;
 	int fireThreshold;
+	DisplayThread* display;
 
 	//timer
 	struct itimerval it_val;
@@ -70,9 +86,8 @@ private:
 	BackgroundSubtractorMOG2 bg;
 	int imgWidth, imgHeight;
 
-	void cvShowManyImages(char* title, int s_cols, int s_rows, int nArgs, ...);
-	void init();
-	void start();
+	void cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs, ...);
+
 	void join();
 
 	static void* captureFrame(void* arg);

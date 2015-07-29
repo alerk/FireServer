@@ -33,8 +33,10 @@
 
 #include "ini_parser/iniparser.h"
 
-void* runFireThread(void* arg);
+//void* runFireThread(void* arg);
 const bool DEBUG = true;
+int num_of_source;
+static int fire_instant_counter = 0;
 #if RUN_CPP
 	FireDetector* objFireDetector;
 	cv::VideoCapture capture_;
@@ -46,7 +48,9 @@ static CvCapture* capture;
 FireThread::FireThread()
 {
 	// TODO Auto-generated constructor stub
-	initFireThread();
+//	initFireThread();
+	fire_instant_counter++;
+	std::cout << "[FireThread]Instant: " << fire_instant_counter << std::endl;
 }
 
 FireThread::~FireThread()
@@ -55,7 +59,8 @@ FireThread::~FireThread()
 	pthread_cancel(fireThread);
 }
 #if RUN_CPP
-void* runFireThread(void* arg)
+
+void* FireThread::runFireThread(void* arg)
 {
 	FireThread* fireObj = (FireThread*)arg;
 	int elapsedFrame = 0;
@@ -99,35 +104,44 @@ void* runFireThread(void* arg)
 #else
 	while(true)
 	{
-		for(std::vector<FireDetector*>::iterator it = vectorDetector.begin(); it != vectorDetector.end(); ++it)
+		for(int id = 0; id < num_of_source; id++)
 		{
-			if((*it)->hasFire)
+			FireDetector* temp = vectorDetector.at(id);
+			if(temp->isFire)
 			{
-				elapsedFrame++;
-				if(elapsedFrame > 30)//if more than sth, then fire
-				{
-					elapsedFrame = 0;
-					(fireObj->fireDetected)(fireObj->handler, (*it)->getSourceId());
-				}
+				(fireObj->fireDetected)(fireObj->handler, temp->getSourceId());
+				temp->isFire = false;
 			}
 		}
+//		for(std::vector<FireDetector*>::iterator it = vectorDetector.begin(); it != vectorDetector.end(); ++it)
+//		{
+//			if((*it)->isFire)
+//			{
+//				elapsedFrame++;
+//				if(elapsedFrame > (*it)->getFireThreshold())//if more than sth, then fire
+//				{
+//					elapsedFrame = 0;
+//					(fireObj->fireDetected)(fireObj->handler, (*it)->getSourceId());
+//				}
+//			}
+//		}
 
 
 		//-------------ending----------------//
-		int c = waitKey(DELAY_TIME);
-		if( c == 'q' )
-		{
-			break;
-		}
-		else if(c=='f')
-		{
-			//(fireObj->fireDetected)(fireObj->handler);
-
-		}
-		else
-		{
-			//do nothing
-		}
+//		int c = waitKey(DELAY_TIME/10);
+//		if( c == 'q' )
+//		{
+//			break;
+//		}
+//		else if(c=='f')
+//		{
+//			//(fireObj->fireDetected)(fireObj->handler);
+//
+//		}
+//		else
+//		{
+//			//do nothing
+//		}
 		sleep(1);
 	}
 #endif
@@ -415,10 +429,16 @@ void* runFireThread(void* arg)
 void FireThread::startFireThread()
 {
 	//if( pthread_create(&fireThread,NULL,run,(void*)this)!=0)
-	if( pthread_create(&fireThread,NULL,runFireThread,(void*)this)!=0) //using myCode
+	if( pthread_create(&fireThread,NULL, FireThread::runFireThread,(void*)this)!=0) //using myCode
 	{
 		std::cout << "Fail to create fireThread" << std::endl;
 	}
+	for(int id = 0; id < num_of_source; id++)
+	{
+		FireDetector* temp = vectorDetector.at(id);
+		temp->start();
+	}
+
 }
 
 void FireThread::initFireThread()
@@ -464,7 +484,7 @@ void FireThread::initFireThread()
 		fprintf(stderr, "cannot parse file\n");
 		return;
 	}
-	int num_of_source = iniparser_getint(ini, "fire_detector:num_of_source",1);
+	num_of_source = iniparser_getint(ini, "fire_detector:num_of_source",1);
 	if(num_of_source>MAX_NUMBER_OF_INPUT)
 	{
 		num_of_source = MAX_NUMBER_OF_INPUT;
@@ -479,6 +499,7 @@ void FireThread::initFireThread()
 		int threshold = iniparser_getint(ini, temp_threshold, 10);
 		FireDetector* fireDet = new FireDetector(i, temp, source, threshold);
 		vectorDetector.push_back(fireDet);
+		fireDet->init();
 	}
 	iniparser_freedict(ini);
 #endif

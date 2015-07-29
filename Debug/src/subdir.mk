@@ -4,6 +4,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
+../src/DisplayThread.cpp \
 ../src/FireServer.cpp \
 ../src/FireThread.cpp \
 ../src/IntruderThread.cpp \
@@ -12,6 +13,7 @@ CPP_SRCS += \
 ../src/main.cpp 
 
 OBJS += \
+./src/DisplayThread.o \
 ./src/FireServer.o \
 ./src/FireThread.o \
 ./src/IntruderThread.o \
@@ -20,6 +22,7 @@ OBJS += \
 ./src/main.o 
 
 CPP_DEPS += \
+./src/DisplayThread.d \
 ./src/FireServer.d \
 ./src/FireThread.d \
 ./src/IntruderThread.d \

@@ -25,7 +25,7 @@ using namespace std;
 
 ServerThread::ServerThread() {
 	// TODO Auto-generated constructor stub
-	initServerThread();
+//	initServerThread();
 
 }
 
@@ -86,12 +86,10 @@ static void* run(void* arg)
 //						}
 						pthread_mutex_trylock(&(obj->serverMutex));
 						//if(obj->hasFire)
-						buffer[4] = 0x00;
-						if(obj->hasFire>=0)
-						{
-							buffer[4] |= (0x01 << obj->hasFire);
-							obj->hasFire = -1;
-						}
+						buffer[4] = 0x0F & obj->hasFire;
+
+						obj->hasFire = 0;
+
 						if(obj->hasIntruder!=0)
 						{
 							buffer[4] |= (0x01 << obj->hasIntruder);
@@ -132,25 +130,26 @@ void ServerThread::sendAlarm(int type) {
 	pthread_mutex_lock(&serverMutex);
 	switch(type)
 	{
-		case 0://Fire
-		case 1:
-		case 2:
-		case 3:
-	//	if(!hasFire)
-		{
-//			std::cout << "Fire Callback to ServerThread's function" << std::endl;
-			hasFire = type;
-	//		pthread_cond_signal(&serverCond);
-		}
+	case 0://Fire
+		hasFire |= (0x01<<0);
 		break;
-		case SRC_INTRUDER://Intruder
-		{
-//			std::cout << "Intruder Callback to ServerThread's function" << std::endl;
-			hasIntruder = SRC_INTRUDER;
-		}
-			break;
-		default:
-			break;
+	case 1:
+		hasFire |= (0x01<<1);
+		break;
+	case 2:
+		hasFire |= (0x01<<2);
+		break;
+	case 3:
+		hasFire |= (0x01<<3);
+		break;
+	case SRC_INTRUDER://Intruder
+	{
+		//			std::cout << "Intruder Callback to ServerThread's function" << std::endl;
+		hasIntruder = SRC_INTRUDER;
+	}
+	break;
+	default:
+		break;
 	}
 	pthread_mutex_unlock(&serverMutex);
 }

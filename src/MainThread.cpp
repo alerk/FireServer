@@ -13,7 +13,7 @@
 static void* run(void* arg);
 MainThread::MainThread() {
 	// TODO Auto-generated constructor stub
-	initMainThread();
+//	initMainThread();
 
 }
 
@@ -37,9 +37,9 @@ void MainThread::startMainThread() {
 
 void MainThread::initMainThread() {
 	fireObj = new FireThread();
-	//fireObj->initFireThread();
+	fireObj->initFireThread();
 	serverObj = new ServerThread();
-	//serverObj->initServerThread();
+	serverObj->initServerThread();
 	intruderObj = new IntruderThread();
 
 	//assign callback from fireObj to serverObj
