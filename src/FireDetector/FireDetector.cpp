@@ -14,7 +14,7 @@
 
 
 
-#define DELAY_TIME_MS 5
+#define DELAY_TIME_MS 3
 #define DUAL_THREAD 0
 
 //void* run(void* arg);
@@ -35,7 +35,8 @@ FireDetector::FireDetector(int id, std::string name, std::string input, int thre
 	char wName[25];
 	sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
 	std::cout << wName << std::endl;
-	namedWindow(wName);
+	//namedWindow(wName);
+	imgWidth = imgHeight = -1;
 
 //	init();
 //	start();
@@ -134,8 +135,8 @@ int FireDetector::getFirePixelNumber(BackgroundSubtractorMOG2 bg, Mat frame, Mat
 		sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
 //		std::cout << "[FireDetector " << sourceName << "]Send display!" <<std::endl;
 //		display->enqueue((unsigned char*)frame.data, frame.cols*frame.rows*frame.elemSize(), frame.cols, frame.rows, frame.channels());
-		cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
-//		imshow(wName, frame);
+//		cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
+		imshow(wName, frame);
 		if(fireCount>fireThreshold)
 		{
 			//count the frame that contains firePixel surpass threshold
@@ -149,7 +150,7 @@ int FireDetector::getFirePixelNumber(BackgroundSubtractorMOG2 bg, Mat frame, Mat
 		return fireCount;
 }
 
-int FireDetector::getFirePixelNumber(Mat frame) {
+int FireDetector::getFirePixelNumber(Mat aFrame) {
 	std::vector<std::vector<cv::Point> > contours;
 
 	Mat YCrCbFrame;
@@ -158,14 +159,14 @@ int FireDetector::getFirePixelNumber(Mat frame) {
 	Mat colorMask;
 
 	//check for input frame
-	if(frame.empty())
+	if(aFrame.empty())
 	{
 		return -1;
 	}
 	//---------------detect moving pixel------------//
 	//       using BackgroundSubstractMOG2 			//
 	//----------------------------------------------//
-	bg.operator ()(frame, front);
+	bg.operator ()(aFrame, front);
 	bg.getBackgroundImage(back);
 	//cv::erode(front,front, cv::Mat());
 	//cv::dilate(front, front, cv::Mat());
@@ -199,7 +200,7 @@ int FireDetector::getFirePixelNumber(Mat frame) {
 	//-------------------------------------------------------------------//
 
 	//get YCrCb channel
-	cvtColor(frame, YCrCbFrame, CV_BGR2YCrCb);
+	cvtColor(aFrame, YCrCbFrame, CV_BGR2YCrCb);
 	vector<Mat> channels(3);
 	split(YCrCbFrame, channels);
 	YChannel = channels[0];
@@ -212,9 +213,9 @@ int FireDetector::getFirePixelNumber(Mat frame) {
 //	Cr_mean = (unsigned char)mean(CrChannel)[0];
 //	Cb_mean = (unsigned char)mean(CbChannel)[0];
 
-	colorMask = Mat(frame.rows, frame.cols, CV_8UC1);
-	Y_Cb  = Mat(frame.rows, frame.cols, CV_8UC1);//YChannel minus CbChannel
-	Cr_Cb = Mat(frame.rows, frame.cols, CV_8UC1);//CrChannel minus CbChannel
+	colorMask = Mat(aFrame.rows, aFrame.cols, CV_8UC1);
+	Y_Cb  = Mat(aFrame.rows, aFrame.cols, CV_8UC1);//YChannel minus CbChannel
+	Cr_Cb = Mat(aFrame.rows, aFrame.cols, CV_8UC1);//CrChannel minus CbChannel
 	subtract(YChannel, CbChannel, Y_Cb); threshold(Y_Cb, Y_Cb, 10, 255, THRESH_BINARY);
 	subtract(CrChannel, CbChannel, Cr_Cb);threshold(Cr_Cb, Cr_Cb, 10, 255, THRESH_BINARY);
 
@@ -231,7 +232,7 @@ int FireDetector::getFirePixelNumber(Mat frame) {
 
 	char wName[25];
 	sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
-	cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
+//	cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
 //	imshow(wName, frame);
 	if(fireCount>fireThreshold)
 	{
@@ -283,22 +284,33 @@ void* FireDetector::run(void* arg)
 void* FireDetector::run(void* arg)
 {
 	FireDetector* obj = (FireDetector*)arg;
-	cv::Mat aFrame;
+	cv::Mat aFrame, tempFrame;
 	Mat back;
 	Mat front;
 	BackgroundSubtractorMOG2 bg;
 	unsigned int frameCount = 0;
+	char wName[25];
+		sprintf(&(wName[0]),"Video_%d", obj->getSourceId());
 	while(true)
 	{
-		obj->capture >> aFrame;
-//		if(!obj->capture.read(aFrame))
-		if(aFrame.empty())
+//		obj->capture >> aFrame;
+		if(!obj->capture.read(tempFrame))
+//		if(aFrame.empty())
 		{
 			std::cout << "[Run Loop "<< obj->getSourceId()<<"]Cannot read frame" << std::endl;
 			obj->capture.set(CV_CAP_PROP_POS_AVI_RATIO, 0);
 			//setCaptureProperty(capture, CV_CAP_PROP_POS_AVI_RATIO, 0);
 			continue;
 		}
+		cv::resize(tempFrame, aFrame, cv::Size(640,480), 0, 0, cv::INTER_CUBIC);
+		//pthread_mutex_lock(&obj->runMutex);
+//		if(!obj->has_new_image)
+//		{
+//			obj->has_new_image = true;
+//		}
+		obj->setFrame(aFrame);
+		//pthread_mutex_unlock(&obj->runMutex);
+
 //		int start_s=clock();
 		int firePixel = obj->getFirePixelNumber(aFrame);
 //		int firePixel = obj->getFirePixelNumber(bg, aFrame, back, front);
@@ -313,6 +325,7 @@ void* FireDetector::run(void* arg)
 		}
 //		int stop_s=clock();
 //		std::cout << "time(ms): " << (stop_s-start_s)/double(CLOCKS_PER_SEC)*1000 << std::endl;
+		imshow(wName, aFrame);
 		char c = waitKey(DELAY_TIME_MS);
 		if(c=='q')
 		{
@@ -331,6 +344,7 @@ void FireDetector::init()
 	{
 		std::cout << "Cannot open video source!" << std::endl;
 	}
+	std::cout << "[FireDetector_"<< this->getSourceId() << "]Init" << std::endl;
 //	display = new DisplayThread(sourceName);
 //	display->initDisplayThread();
 
@@ -349,24 +363,31 @@ void FireDetector::start()
 	{
 		std::cout << "Fail to create fireThread" << std::endl;
 	}
+	std::cout << "[FireDetector_"<< this->getSourceId() << "]Start" << std::endl;
 //	display->startDisplayThread();
 }
 
 void FireDetector::join()
 {
 	pthread_join(runThread, NULL);
+#if DUAL_THREAD
 	pthread_join(captureThread, NULL);
+#endif
 }
 
 void* FireDetector::captureFrame(void* arg)
 {
 	cv::Mat aFrame;
 	FireDetector* obj = (FireDetector*)arg;
+	char wName[25];
+	sprintf(&(wName[0]),"Video_%d", obj->getSourceId());
+
 	while(true)
 	{
-		if(!(obj->capture).read(obj->frame))
+		if(!(obj->capture).read(aFrame))
 		{
 			std::cout << "[Main FireDetector]Cannot read frame" << std::endl;
+			obj->capture.set(CV_CAP_PROP_POS_AVI_RATIO, 0);
 			//break;
 		}
 		else
@@ -384,146 +405,26 @@ void* FireDetector::captureFrame(void* arg)
 			{
 				obj->setImgHeight(h);
 			}
-			//queue the receive frame
-			pthread_mutex_lock(&obj->runMutex);
-			int data_size = obj->frame.cols*obj->frame.rows*obj->frame.elemSize()*sizeof(char);
-			unsigned char* temp_data = (unsigned char*)malloc(data_size);
-			memcpy(temp_data, obj->frame.data, data_size);
-			frameQueue.push(temp_data);
-			std::cout << "Push to queue" << std::endl;
-//			imshow("Frame", obj->frame);
-			pthread_cond_signal(&obj->runCond);
-			pthread_mutex_unlock(&obj->runMutex);
+//			//queue the receive frame
+//			pthread_mutex_lock(&obj->runMutex);
+//			int data_size = obj->frame.cols*obj->frame.rows*obj->frame.elemSize()*sizeof(char);
+//			unsigned char* temp_data = (unsigned char*)malloc(data_size);
+//			memcpy(temp_data, obj->frame.data, data_size);
+//			frameQueue.push(temp_data);
+//			std::cout << "Push to queue" << std::endl;
+////			imshow("Frame", obj->frame);
+//			pthread_cond_signal(&obj->runCond);
+//			pthread_mutex_unlock(&obj->runMutex);
+
+			//imshow(wName, aFrame);
 		}
-//		char c = waitKey(20);
-//		if(c=='q')
-//		{
-//			break;
-//		}
+		char c = waitKey(DELAY_TIME_MS);
+		if(c=='q')
+		{
+			break;
+		}
 	}
 	return NULL;
 }
 
-void FireDetector::cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs,...)
-{
-	// img - Used for getting the arguments
-	cv::Mat img;
 
-	// [[disp_image]] - the image in which input images are to be copied
-	cv::Mat disp_image;
-
-	int size;
-	int i;
-	int m, n;
-	int x, y;
-
-	// w - Maximum number of images in a row
-	// h - Maximum number of images in a column
-	int w, h;
-
-	// scale - How much we have to resize the image
-	float scale;
-	int max;
-
-	// If the number of arguments is lesser than 0 or greater than 12
-	// return without displaying
-	if(nArgs <= 0)
-	{
-		std::cout << "Number of arguments too small...." << std::endl;
-		return;
-	}
-	else if(nArgs > 12)
-	{
-		std::cout << "Number of arguments too large...." << std::endl;
-		return;
-	}
-	// Determine the size of the image,
-	// and the number of rows/cols
-	// from number of arguments
-	else if (nArgs == 1)
-	{
-		w = h = 1;
-		size = SIZE_1;
-	}
-	else if (nArgs == 2)
-	{
-		w = 2; h = 1;
-		size = SIZE_1;
-	}
-	else if (nArgs == 3 || nArgs == 4)
-	{
-		w = 2; h = 2;
-		size = SIZE_1;
-	}
-	else if (nArgs == 5 || nArgs == 6)
-	{
-		w = 3; h = 2;
-		size = SIZE_2;
-	}
-	else if (nArgs == 7 || nArgs == 8)
-	{
-		w = 4; h = 2;
-		size = SIZE_2;
-	}
-	else
-	{
-		w = 4; h = 3;
-		size = SIZE_3;
-	}
-
-	// Create a new 3 channel image
-	disp_image = cv::Mat(cv::Size((w+1)*GAP+size*w, (h+1)*GAP+size*h), CV_8UC3, 3);
-
-	// Used to get the arguments passed
-	va_list args;
-	va_start(args, nArgs);
-
-	// Loop for nArgs number of arguments
-	for (i = 0, m = GAP, n = GAP; i < nArgs; i++, m += (GAP + size))
-	{
-		// Get the Pointer to the IplImage
-		unsigned char* temp = va_arg(args, unsigned char*);
-
-		// Check whether it is NULL or not
-		// If it is NULL, release the image, and return
-		img = cv::Mat( s_rows, s_cols, CV_8UC3, temp);
-		if(img.empty())
-		{
-			std::cout << "Invalid arguments" << std::endl;
-			return;
-		}
-
-		// Find the width and height of the image
-		x = img.cols;
-		y = img.rows;
-
-		// Find whether height or width is greater in order to resize the image
-		max = (x > y)? x: y;
-
-		// Find the scaling factor to resize the image
-		scale = (float) ( (float) max / size );
-
-		// Used to Align the images
-		if( i % w == 0 && m!= GAP)
-		{
-			m = GAP;
-			n+= (GAP + size);
-		}
-
-		// Set the image ROI to display the current image
-		cv::Rect roi(m, n, (int)(x/scale), (int)( y/scale ));
-		cv::Mat image_roi = disp_image(roi);
-
-		// Resize the input image and copy the it to the Single Big Image
-		cv::resize(img, img, cv::Size((int)(x/scale), (int)( y/scale )));
-		img.copyTo(image_roi);
-
-		// Reset the ROI in order to display the next image
-	}
-
-	// Create a new window, and show the Single Big Image
-	imshow(title, disp_image);
-
-	// End the number of arguments
-	va_end(args);
-}

@@ -7,6 +7,7 @@
 
 #ifndef SOURCE_FIREDETECTORTHREAD_H_
 #define SOURCE_FIREDETECTORTHREAD_H_
+#include <iostream>
 #include <pthread.h>
 #define MAX_NUMBER_OF_INPUT 10
 
@@ -33,6 +34,7 @@ public:
 	void*			handler;//Actual object that handles the call
 	void 			connectCallback(CallbackPtr cb, void* cbHandler);
 	static void* 	runFireThread(void* arg);
+	void cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs,...);
 };
 
 #endif /* SOURCE_FIREDETECTORTHREAD_H_ */

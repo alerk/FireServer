@@ -41,10 +41,13 @@ void MainThread::initMainThread() {
 	serverObj = new ServerThread();
 	serverObj->initServerThread();
 	intruderObj = new IntruderThread();
+	intruderObj->initIntruderThread();
 
 	//assign callback from fireObj to serverObj
 	fireObj->connectCallback(ServerThread::handleFireDetected, serverObj);
 	intruderObj->connectCallback(ServerThread::handleIntruderDetected, serverObj);
+
+	std::cout << "Main Thread" << std::endl;
 
 }
 

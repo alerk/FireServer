@@ -39,6 +39,7 @@ void ServerThread::startServerThread() {
 	{
 		std::cout << "Fail to create serverThread" << std::endl;
 	}
+	std::cout << "[ServerThread]Start" << std::endl;
 }
 
 void ServerThread::initServerThread() {
@@ -52,6 +53,7 @@ void ServerThread::initServerThread() {
 	}
 	server_port = iniparser_getint(ini, "server_thread:port",12345);
 	iniparser_freedict(ini);
+	std::cout << "[ServerThread]Init" << std::endl;
 }
 
 void ServerThread::joinServerThread() {

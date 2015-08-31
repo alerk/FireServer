@@ -12,6 +12,7 @@ RM := rm -rf
 -include src/Socket/subdir.mk
 -include src/FireDetector/subdir.mk
 -include src/subdir.mk
+-include Resources/subdir.mk
 -include subdir.mk
 -include objects.mk
 

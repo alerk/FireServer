@@ -19,6 +19,7 @@
 #include <signal.h>     /* for signal */
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 
 #include "../DisplayThread.h"
 
@@ -69,13 +70,51 @@ public:
 
 	void init();
 	void start();
+	void join();
+
+	int getFrame(unsigned char* buff)  {
+		if(!isHasNewImage())
+		{
+			return 0;
+		}
+		else
+		{
+			pthread_mutex_lock(&runMutex);
+			unsigned int imgSize = frame.cols*frame.rows*frame.elemSize();
+			setHasNewImage(false);
+			memcpy(buff, frame.data, imgSize);
+			//std::cout << "[FireDetector "<< this->sourceId << "]Return frame!" << std::endl;
+			pthread_mutex_unlock(&runMutex);
+			return 1;
+		}
+	}
+
+	void setFrame(const Mat& frame) {
+		pthread_mutex_lock(&runMutex);
+		//std::cout << "[FireDetector "<< this->sourceId << "]Set frame!" << std::endl;
+		setHasNewImage(true);
+		this->imgWidth = frame.cols;
+		this->imgHeight = frame.rows;
+		this->frame = frame.clone();
+//		pthread_cond_signal(&runCond);
+		pthread_mutex_unlock(&runMutex);
+	}
+
+	bool isHasNewImage() const {
+		return has_new_image;
+	}
+
+	void setHasNewImage(bool hasNewImage) {
+		has_new_image = hasNewImage;
+	}
 
 private:
 	int sourceId;
 	std::string sourceName;
 	std::string sourceVideo;
 	int fireThreshold;
-	DisplayThread* display;
+	bool has_new_image;
+	//DisplayThread* display;
 
 	//timer
 	struct itimerval it_val;
@@ -88,7 +127,7 @@ private:
 
 	void cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs, ...);
 
-	void join();
+
 
 	static void* captureFrame(void* arg);
 	static void* run(void* arg);

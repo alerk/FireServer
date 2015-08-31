@@ -27,4 +27,5 @@ src \
 src/ini_parser \
 src/Socket \
 src/FireDetector \
+Resources \
 

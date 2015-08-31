@@ -31,7 +31,7 @@ static int src_port;
 IntruderThread::IntruderThread()
 {
 	// TODO Auto-generated constructor stub
-	initIntruderThread();
+
 
 }
 
@@ -47,6 +47,7 @@ void IntruderThread::startIntruderThread()
 	{
 		std::cout << "Fail to create intruderThread" << std::endl;
 	}
+	std::cout << "[IntruderThread]Start" << std::endl;
 }
 
 void IntruderThread::initIntruderThread()
@@ -63,6 +64,7 @@ void IntruderThread::initIntruderThread()
 	src_str = iniparser_getstring(ini,"intruder_detector:source", DEFAULT_IP);
 	src_port = iniparser_getint(ini, "intruder_detector:port",DEFAULT_PORT);
 	iniparser_freedict(ini);
+	std::cout << "[IntruderThread]Init" << std::endl;
 }
 
 void IntruderThread::joinIntruderThread()
