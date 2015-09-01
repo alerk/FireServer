@@ -67,57 +67,63 @@ static void* run(void* arg)
 
 		ServerSocket listenServer(server_port);
 		while(true)
+		{
+			ServerSocket sendToSocket;
+			cout << "Waiting for client!" << endl;
+			listenServer.accept(sendToSocket);
+			cout << "Client connected!" << endl;
+			while(true)
 			{
-				ServerSocket sendToSocket;
-				cout << "Waiting for client!" << endl;
-				listenServer.accept(sendToSocket);
-				cout << "Client connected!" << endl;
-				while(true)
-				{
-					try{
-						unsigned char buffer[5];
-						memset(buffer,0,5);
-						buffer[0] = 0xaa;
-						buffer[1] = 0x55;
-						buffer[2] = 0x00;
-						buffer[3] = (counter++);
-//						while(!obj->hasFire)
-//						{
-//							std::cout << "[ServerThread] Run but no signal" << std::endl;
-//							pthread_cond_wait(&(obj->serverCond), &(obj->serverMutex));
-//						}
-						pthread_mutex_trylock(&(obj->serverMutex));
-						//if(obj->hasFire)
-						buffer[4] = 0x0F & obj->hasFire;
+				try{
+					unsigned char buffer[5];
+					memset(buffer,0,5);
+					buffer[0] = 0xaa;
+					buffer[1] = 0x55;
+					buffer[2] = 0x00;
+					buffer[3] = (counter++);
+					//						while(!obj->hasFire)
+					//						{
+					//							std::cout << "[ServerThread] Run but no signal" << std::endl;
+					//							pthread_cond_wait(&(obj->serverCond), &(obj->serverMutex));
+					//						}
+					pthread_mutex_trylock(&(obj->serverMutex));
+					//if(obj->hasFire)
+					buffer[4] = 0x0F & obj->hasFire;
 
-						obj->hasFire = 0;
+					obj->hasFire = 0;
 
-						if(obj->hasIntruder!=0)
-						{
-							buffer[4] |= (0x01 << obj->hasIntruder);
-							obj->hasIntruder = 0;
-						}
-//						bool sendOK = sendToSocket.send(buffer, 5);
-						sendToSocket.send( (char*)buffer, 5);
-						pthread_mutex_unlock(&(obj->serverMutex));
-
+					if(obj->hasIntruder!=0)
+					{
+						buffer[4] |= (0x01 << obj->hasIntruder);
+						obj->hasIntruder = 0;
+					}
+					//						bool sendOK = sendToSocket.send(buffer, 5);
+					bool isSendOk = sendToSocket.send( (char*)buffer, 5);
+					pthread_mutex_unlock(&(obj->serverMutex));
+					if(!isSendOk)
+					{
+						cout << "Client disconnected" << endl;
+						break;
+					}
+					else
+					{
 						cout << "Client sent: " ;
 						for(int i=0;i<5;i++)
 						{
 							printf("%2.2x ", (unsigned char)buffer[i]);
 						}
 						cout << endl;
-
-
 					}
-					catch(SocketException& e)
-					{
-						std::cout << "Error while accepting client " << e.description() << std::endl;
-						break;
-					}
-					sleep(2);
+
 				}
+				catch(SocketException& e)
+				{
+					std::cout << "Error while accepting client " << e.description() << std::endl;
+					break;
+				}
+				sleep(2);
 			}
+		}
 	}
 	catch(SocketException& e)
 	{
@@ -129,7 +135,7 @@ static void* run(void* arg)
 }
 
 void ServerThread::sendAlarm(int type) {
-	pthread_mutex_lock(&serverMutex);
+	//pthread_mutex_lock(&serverMutex);
 	switch(type)
 	{
 	case 0://Fire
@@ -153,7 +159,7 @@ void ServerThread::sendAlarm(int type) {
 	default:
 		break;
 	}
-	pthread_mutex_unlock(&serverMutex);
+	//pthread_mutex_unlock(&serverMutex);
 }
 
 void ServerThread::handleFireDetected(void* arg, int source)

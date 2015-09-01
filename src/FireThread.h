@@ -20,6 +20,7 @@ public:
 
 private:
 	pthread_t 		fireThread;
+	pthread_t 		displayThread;
 	pthread_mutex_t fireMutex;
 	pthread_cond_t 	fireCond;
 
@@ -34,6 +35,7 @@ public:
 	void*			handler;//Actual object that handles the call
 	void 			connectCallback(CallbackPtr cb, void* cbHandler);
 	static void* 	runFireThread(void* arg);
+	static void* 	runDisplayThread(void* arg);
 	void cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs,...);
 };
 

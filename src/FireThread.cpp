@@ -48,6 +48,9 @@ static int fire_instant_counter = 0;
 	const int unsigned SIZE_2 = 320;
 	const int unsigned SIZE_3 = 280;
 
+	unsigned char* s[MAX_CAM_DISPLAY];
+	//unsigned char* s1[MAX_CAM_DISPLAY];
+
 
 #else
 static CvCapture* capture;
@@ -59,7 +62,7 @@ FireThread::FireThread()
 //	initFireThread();
 	fire_instant_counter++;
 	std::cout << "[FireThread]Instant: " << fire_instant_counter << std::endl;
-	namedWindow("Display window", WINDOW_AUTOSIZE);
+
 }
 
 FireThread::~FireThread()
@@ -68,19 +71,54 @@ FireThread::~FireThread()
 	pthread_cancel(fireThread);
 }
 #if RUN_CPP
+void* FireThread::runDisplayThread(void* arg)
+{
+	FireThread* fireObj = (FireThread*)arg;
+	int num_of_display = (num_of_source>MAX_CAM_DISPLAY)?MAX_CAM_DISPLAY:num_of_source;
+	namedWindow("Display window", WINDOW_AUTOSIZE);
+	while(true)
+	{
+		switch(num_of_display)
+		{
+		case 1:
+			fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0]);
+			break;
+		case 2:
+			fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1]);
+			break;
+		case 3:
+			fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1], s[2]);
+			break;
+		case 4:
+			fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1], s[2], s[3]);
+			break;
+		default:
+			break;
+		}
+		int c = waitKey(DELAY_TIME);
+		if( c == 'q' )
+		{
+			break;
+		}
+		else if(c=='f')
+		{
+			//(fireObj->fireDetected)(fireObj->handler);
 
+		}
+		else
+		{
+			//do nothing
+		}
+	}
+	return NULL;
+}
 void* FireThread::runFireThread(void* arg)
 {
 	FireThread* fireObj = (FireThread*)arg;
 	int elapsedFrame = 0;
 //	Mat s[MAX_CAM_DISPLAY];
-	unsigned char* s[MAX_CAM_DISPLAY];
-	unsigned char* s1[MAX_CAM_DISPLAY];
-	for(int id = 0; id<MAX_CAM_DISPLAY; id++)
-	{
-		s[id] = (unsigned char*)malloc(640*480*3*sizeof(unsigned char));
-		s1[id] = (unsigned char*)malloc(640*480*3*sizeof(unsigned char));
-	}
+
+
 #ifdef RUN_ONE_CAM
 	cv::Mat frame;
 	while(true)
@@ -121,7 +159,7 @@ void* FireThread::runFireThread(void* arg)
 #else
 	while(true)
 	{
-		int num_of_display = (num_of_source>MAX_CAM_DISPLAY)?MAX_CAM_DISPLAY:num_of_source;
+
 		bool has_image = false;
 		for(int id = 0; id < num_of_source; id++)
 		{
@@ -148,49 +186,9 @@ void* FireThread::runFireThread(void* arg)
 ////				s[id] = Mat(640, 480, CV_8UC3, buff);
 //			}
 		}
-
-		if(0)
-		{
-			switch(num_of_display)
-			{
-			case 1:
-				fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0]);
-				break;
-			case 2:
-				fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1]);
-				break;
-			case 3:
-				fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1], s[2]);
-				break;
-			case 4:
-				fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1], s[2], s[3]);
-				break;
-			default:
-				break;
-			}
-		}
-//		for(int i=0;i<num_of_display;i++)
-//		{
-//			s[i].release();
-//		}
-
-
 		//-------------ending----------------//
-		int c = waitKey(DELAY_TIME);
-		if( c == 'q' )
-		{
-			break;
-		}
-		else if(c=='f')
-		{
-			//(fireObj->fireDetected)(fireObj->handler);
 
-		}
-		else
-		{
-			//do nothing
-		}
-//		usleep(DELAY_TIME*1000);
+		usleep(DELAY_TIME);
 	}
 #endif
 	return NULL;
@@ -481,6 +479,12 @@ void FireThread::startFireThread()
 	{
 		std::cout << "Fail to create fireThread" << std::endl;
 	}
+
+	if( pthread_create(&displayThread,NULL, FireThread::runDisplayThread,(void*)this)!=0) //using myCode
+	{
+		std::cout << "Fail to create displayThread" << std::endl;
+	}
+
 	for(int id = 0; id < num_of_source; id++)
 	{
 		FireDetector* temp = vectorDetector.at(id);
@@ -539,6 +543,12 @@ void FireThread::initFireThread()
 		fprintf(stderr, "cannot parse file\n");
 		return;
 	}
+
+	for(int id = 0; id<MAX_CAM_DISPLAY; id++)
+	{
+		s[id] = (unsigned char*)malloc(640*480*3*sizeof(unsigned char));
+		//s1[id] = (unsigned char*)malloc(640*480*3*sizeof(unsigned char));
+	}
 	num_of_source = iniparser_getint(ini, "fire_detector:num_of_source",1);
 	if(num_of_source>MAX_NUMBER_OF_INPUT)
 	{
@@ -553,6 +563,10 @@ void FireThread::initFireThread()
 		std::string source = iniparser_getstring(ini,temp_src,"Resources/usnMR6I_EAQ.mp4");
 		int threshold = iniparser_getint(ini, temp_threshold, 10);
 		FireDetector* fireDet = new FireDetector(i, temp, source, threshold);
+		if(i<num_of_source && i<MAX_CAM_DISPLAY)
+		{
+			fireDet->setBuffer(s[i]);
+		}
 //		fireDet->join();
 		vectorDetector.push_back(fireDet);
 		fireDet->init();
@@ -565,6 +579,7 @@ void FireThread::initFireThread()
 
 void FireThread::joinFireThread()
 {
+	pthread_join(displayThread, NULL);
 	pthread_join(fireThread, NULL);
 }
 

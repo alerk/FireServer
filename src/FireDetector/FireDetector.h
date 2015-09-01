@@ -90,14 +90,22 @@ public:
 	}
 
 	void setFrame(const Mat& frame) {
-		pthread_mutex_lock(&runMutex);
-		//std::cout << "[FireDetector "<< this->sourceId << "]Set frame!" << std::endl;
-		setHasNewImage(true);
-		this->imgWidth = frame.cols;
-		this->imgHeight = frame.rows;
-		this->frame = frame.clone();
-//		pthread_cond_signal(&runCond);
-		pthread_mutex_unlock(&runMutex);
+		if(imgBuff!=NULL)
+		{
+//			pthread_mutex_lock(&runMutex);
+			//std::cout << "[FireDetector "<< this->sourceId << "]Set frame!" << std::endl;
+			setHasNewImage(true);
+			this->imgWidth = frame.cols;
+			this->imgHeight = frame.rows;
+			//		this->frame = frame.clone();
+			//		pthread_cond_signal(&runCond);
+			memcpy(imgBuff, frame.data, frame.cols*frame.rows*frame.elemSize()*sizeof(unsigned char));
+//			pthread_mutex_unlock(&runMutex);
+		}
+		else
+		{
+			std::cout << "NULL image buffer" << std::endl;
+		}
 	}
 
 	bool isHasNewImage() const {
@@ -106,6 +114,11 @@ public:
 
 	void setHasNewImage(bool hasNewImage) {
 		has_new_image = hasNewImage;
+	}
+
+	void setBuffer(unsigned char* buff)
+	{
+		imgBuff = buff;
 	}
 
 private:
@@ -124,6 +137,7 @@ private:
 	Mat front;
 	BackgroundSubtractorMOG2 bg;
 	int imgWidth, imgHeight;
+	unsigned char* imgBuff;
 
 	void cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs, ...);
 

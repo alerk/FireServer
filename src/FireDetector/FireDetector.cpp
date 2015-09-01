@@ -293,13 +293,10 @@ void* FireDetector::run(void* arg)
 		sprintf(&(wName[0]),"Video_%d", obj->getSourceId());
 	while(true)
 	{
-//		obj->capture >> aFrame;
 		if(!obj->capture.read(tempFrame))
-//		if(aFrame.empty())
 		{
 			std::cout << "[Run Loop "<< obj->getSourceId()<<"]Cannot read frame" << std::endl;
 			obj->capture.set(CV_CAP_PROP_POS_AVI_RATIO, 0);
-			//setCaptureProperty(capture, CV_CAP_PROP_POS_AVI_RATIO, 0);
 			continue;
 		}
 		cv::resize(tempFrame, aFrame, cv::Size(640,480), 0, 0, cv::INTER_CUBIC);
@@ -325,7 +322,7 @@ void* FireDetector::run(void* arg)
 		}
 //		int stop_s=clock();
 //		std::cout << "time(ms): " << (stop_s-start_s)/double(CLOCKS_PER_SEC)*1000 << std::endl;
-		imshow(wName, aFrame);
+//		imshow(wName, aFrame);
 		char c = waitKey(DELAY_TIME_MS);
 		if(c=='q')
 		{
