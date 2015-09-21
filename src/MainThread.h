@@ -26,6 +26,8 @@ private:
 	ServerThread* serverObj;
 	IntruderThread* intruderObj;
 
+	bool debug_print;
+
 public:
 	void startMainThread();
 	void initMainThread();

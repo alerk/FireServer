@@ -1,0 +1,11 @@
+eclipse.preferences.version=1
+environment/project/cdt.managedbuild.config.gnu.cross.exe.debug.982486819/PATH/delimiter=\:
+environment/project/cdt.managedbuild.config.gnu.cross.exe.debug.982486819/PATH/operation=replace
+environment/project/cdt.managedbuild.config.gnu.cross.exe.debug.982486819/PATH/value=/bin\:/usr/local/bin\:/usr/bin\:/usr/local/games\:/usr/games\:/usr/lib/jvm/java-8-oracle/bin\:/usr/lib/jvm/java-8-oracle/db/bin\:/usr/lib/jvm/java-8-oracle/jre/bin
+environment/project/cdt.managedbuild.config.gnu.cross.exe.debug.982486819/append=true
+environment/project/cdt.managedbuild.config.gnu.cross.exe.debug.982486819/appendContributed=true
+environment/project/cdt.managedbuild.config.gnu.cross.exe.release.901676220/PATH/delimiter=\:
+environment/project/cdt.managedbuild.config.gnu.cross.exe.release.901676220/PATH/operation=replace
+environment/project/cdt.managedbuild.config.gnu.cross.exe.release.901676220/PATH/value=/bin\:/usr/local/bin\:/usr/bin\:/usr/local/games\:/usr/games\:/usr/lib/jvm/java-8-oracle/bin\:/usr/lib/jvm/java-8-oracle/db/bin\:/usr/lib/jvm/java-8-oracle/jre/bin
+environment/project/cdt.managedbuild.config.gnu.cross.exe.release.901676220/append=true
+environment/project/cdt.managedbuild.config.gnu.cross.exe.release.901676220/appendContributed=true

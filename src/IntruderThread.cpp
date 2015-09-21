@@ -31,6 +31,7 @@ static int src_port;
 IntruderThread::IntruderThread()
 {
 	// TODO Auto-generated constructor stub
+	debug_intruder = false;
 
 
 }
@@ -116,4 +117,8 @@ static void* run(void* arg)
 		}
 	}
 	return NULL;
+}
+
+void IntruderThread::setDebugPrint(bool debug) {
+	debug_intruder = debug;
 }

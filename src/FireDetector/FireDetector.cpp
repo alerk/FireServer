@@ -51,104 +51,104 @@ FireDetector::~FireDetector()
 	// TODO Auto-generated destructor stub
 }
 
-int FireDetector::getFirePixelNumber(BackgroundSubtractorMOG2 bg, Mat frame, Mat back, Mat front) {
-	std::vector<std::vector<cv::Point> > contours;
-
-		Mat YCrCbFrame;
-		Mat YChannel, CrChannel, CbChannel;
-		Mat Y_Cb, Cr_Cb;
-		Mat colorMask;
-
-		//check for input frame
-		if(frame.empty())
-		{
-			return -1;
-		}
-		//---------------detect moving pixel------------//
-		//       using BackgroundSubstractMOG2 			//
-		//----------------------------------------------//
-		bg.operator ()(frame, front);
-		bg.getBackgroundImage(back);
-		//cv::erode(front,front, cv::Mat());
-		//cv::dilate(front, front, cv::Mat());
-		cv::medianBlur(front, front, 5);
-		cv::findContours(front,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
-		vector<vector<Point> > contours_poly( contours.size() );
-		vector<Rect> boundRect( contours.size() );
-		vector<Point2f>center( contours.size() );
-		vector<float>radius( contours.size() );
-
-		for(unsigned int i = 0; i < contours.size(); i++ )
-		{
-			approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
-			boundRect[i] = boundingRect( Mat(contours_poly[i]) );
-			minEnclosingCircle( (Mat)contours_poly[i], center[i], radius[i] );
-		}
-
-		for(unsigned int i = 0; i< contours.size(); i++ )
-		{
-			Scalar color = Scalar( 255,255,255 );
-			//params:	  input   output       contourIdx	color    thickness
-			drawContours( front, contours_poly,    i,       color,   CV_FILLED, 8, vector<Vec4i>(), 0, Point() );
-		}
-
-		//----detect fire color----//
-		//-------------------------------------------------------------------//
-		//	pixel = fire color when											 //
-		//			valueY > valueCb &&										 //
-		//			valueCr > valueCb &&									 //
-		//			(valueY > meanY && valueCr > meanCr && valueCb < meanCb) //
-		//-------------------------------------------------------------------//
-
-		//get YCrCb channel
-		cvtColor(frame, YCrCbFrame, CV_BGR2YCrCb);
-		vector<Mat> channels(3);
-		split(YCrCbFrame, channels);
-		YChannel = channels[0];
-		CrChannel = channels[1];
-		CbChannel = channels[2];
-
-		//calculate mean of 3 channels: => for further use
-	//	unsigned char Y_mean, Cr_mean, Cb_mean;
-	//	Y_mean = (unsigned char)mean(YChannel)[0];
-	//	Cr_mean = (unsigned char)mean(CrChannel)[0];
-	//	Cb_mean = (unsigned char)mean(CbChannel)[0];
-
-		colorMask = Mat(frame.rows, frame.cols, CV_8UC1);
-		Y_Cb  = Mat(frame.rows, frame.cols, CV_8UC1);//YChannel minus CbChannel
-		Cr_Cb = Mat(frame.rows, frame.cols, CV_8UC1);//CrChannel minus CbChannel
-		subtract(YChannel, CbChannel, Y_Cb); threshold(Y_Cb, Y_Cb, 10, 255, THRESH_BINARY);
-		subtract(CrChannel, CbChannel, Cr_Cb);threshold(Cr_Cb, Cr_Cb, 10, 255, THRESH_BINARY);
-
-		//colorMask = front & Y_Cb & Y_Cr
-		bitwise_and(front, Y_Cb, colorMask);
-		bitwise_and(colorMask, Cr_Cb, colorMask);
-
-		int fireCount = countNonZero(colorMask);
-
-		cvtColor(front, front, CV_GRAY2BGR);
-		cvtColor(Y_Cb, Y_Cb, CV_GRAY2BGR);
-		cvtColor(Cr_Cb, Cr_Cb, CV_GRAY2BGR);
-		cvtColor(colorMask, colorMask, CV_GRAY2BGR);
-
-		char wName[25];
-		sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
-//		std::cout << "[FireDetector " << sourceName << "]Send display!" <<std::endl;
-//		display->enqueue((unsigned char*)frame.data, frame.cols*frame.rows*frame.elemSize(), frame.cols, frame.rows, frame.channels());
-//		cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
-		imshow(wName, frame);
-		if(fireCount>fireThreshold)
-		{
-			//count the frame that contains firePixel surpass threshold
-			isFire = true;
-		}
-		else
-		{
-			isFire = false;
-		}
-
-		return fireCount;
-}
+//int FireDetector::getFirePixelNumber(BackgroundSubtractorMOG2 bg, Mat frame, Mat back, Mat front) {
+//	std::vector<std::vector<cv::Point> > contours;
+//
+//		Mat YCrCbFrame;
+//		Mat YChannel, CrChannel, CbChannel;
+//		Mat Y_Cb, Cr_Cb;
+//		Mat colorMask;
+//
+//		//check for input frame
+//		if(frame.empty())
+//		{
+//			return -1;
+//		}
+//		//---------------detect moving pixel------------//
+//		//       using BackgroundSubstractMOG2 			//
+//		//----------------------------------------------//
+//		bg.operator ()(frame, front);
+//		bg.getBackgroundImage(back);
+//		//cv::erode(front,front, cv::Mat());
+//		//cv::dilate(front, front, cv::Mat());
+//		cv::medianBlur(front, front, 5);
+//		cv::findContours(front,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
+//		vector<vector<Point> > contours_poly( contours.size() );
+//		vector<Rect> boundRect( contours.size() );
+//		vector<Point2f>center( contours.size() );
+//		vector<float>radius( contours.size() );
+//
+//		for(unsigned int i = 0; i < contours.size(); i++ )
+//		{
+//			approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );
+//			boundRect[i] = boundingRect( Mat(contours_poly[i]) );
+//			minEnclosingCircle( (Mat)contours_poly[i], center[i], radius[i] );
+//		}
+//
+//		for(unsigned int i = 0; i< contours.size(); i++ )
+//		{
+//			Scalar color = Scalar( 255,255,255 );
+//			//params:	  input   output       contourIdx	color    thickness
+//			drawContours( front, contours_poly,    i,       color,   CV_FILLED, 8, vector<Vec4i>(), 0, Point() );
+//		}
+//
+//		//----detect fire color----//
+//		//-------------------------------------------------------------------//
+//		//	pixel = fire color when											 //
+//		//			valueY > valueCb &&										 //
+//		//			valueCr > valueCb &&									 //
+//		//			(valueY > meanY && valueCr > meanCr && valueCb < meanCb) //
+//		//-------------------------------------------------------------------//
+//
+//		//get YCrCb channel
+//		cvtColor(frame, YCrCbFrame, CV_BGR2YCrCb);
+//		vector<Mat> channels(3);
+//		split(YCrCbFrame, channels);
+//		YChannel = channels[0];
+//		CrChannel = channels[1];
+//		CbChannel = channels[2];
+//
+//		//calculate mean of 3 channels: => for further use
+//	//	unsigned char Y_mean, Cr_mean, Cb_mean;
+//	//	Y_mean = (unsigned char)mean(YChannel)[0];
+//	//	Cr_mean = (unsigned char)mean(CrChannel)[0];
+//	//	Cb_mean = (unsigned char)mean(CbChannel)[0];
+//
+//		colorMask = Mat(frame.rows, frame.cols, CV_8UC1);
+//		Y_Cb  = Mat(frame.rows, frame.cols, CV_8UC1);//YChannel minus CbChannel
+//		Cr_Cb = Mat(frame.rows, frame.cols, CV_8UC1);//CrChannel minus CbChannel
+//		subtract(YChannel, CbChannel, Y_Cb); threshold(Y_Cb, Y_Cb, 10, 255, THRESH_BINARY);
+//		subtract(CrChannel, CbChannel, Cr_Cb);threshold(Cr_Cb, Cr_Cb, 10, 255, THRESH_BINARY);
+//
+//		//colorMask = front & Y_Cb & Y_Cr
+//		bitwise_and(front, Y_Cb, colorMask);
+//		bitwise_and(colorMask, Cr_Cb, colorMask);
+//
+//		int fireCount = countNonZero(colorMask);
+//
+//		cvtColor(front, front, CV_GRAY2BGR);
+//		cvtColor(Y_Cb, Y_Cb, CV_GRAY2BGR);
+//		cvtColor(Cr_Cb, Cr_Cb, CV_GRAY2BGR);
+//		cvtColor(colorMask, colorMask, CV_GRAY2BGR);
+//
+//		char wName[25];
+//		sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
+////		std::cout << "[FireDetector " << sourceName << "]Send display!" <<std::endl;
+////		display->enqueue((unsigned char*)frame.data, frame.cols*frame.rows*frame.elemSize(), frame.cols, frame.rows, frame.channels());
+////		cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
+//		imshow(wName, frame);
+//		if(fireCount>fireThreshold)
+//		{
+//			//count the frame that contains firePixel surpass threshold
+//			isFire = true;
+//		}
+//		else
+//		{
+//			isFire = false;
+//		}
+//
+//		return fireCount;
+//}
 
 int FireDetector::getFirePixelNumber(Mat aFrame) {
 	std::vector<std::vector<cv::Point> > contours;
@@ -415,13 +415,49 @@ void* FireDetector::captureFrame(void* arg)
 
 			//imshow(wName, aFrame);
 		}
-		char c = waitKey(DELAY_TIME_MS);
-		if(c=='q')
-		{
-			break;
-		}
+		usleep(DELAY_TIME_MS*1000);
+//		char c = waitKey(DELAY_TIME_MS);
+//		if(c=='q')
+//		{
+//			break;
+//		}
 	}
 	return NULL;
 }
 
 
+int FireDetector::getFrame(unsigned char* buff)  {
+		if(!isHasNewImage())
+		{
+			return 0;
+		}
+		else
+		{
+			pthread_mutex_lock(&runMutex);
+			unsigned int imgSize = frame.cols*frame.rows*frame.elemSize();
+			setHasNewImage(false);
+			memcpy(buff, frame.data, imgSize);
+			//std::cout << "[FireDetector "<< this->sourceId << "]Return frame!" << std::endl;
+			pthread_mutex_unlock(&runMutex);
+			return 1;
+		}
+	}
+
+void FireDetector::setFrame(const Mat& frame) {
+		if(imgBuff!=NULL)
+		{
+//			pthread_mutex_lock(&runMutex);
+			//std::cout << "[FireDetector "<< this->sourceId << "]Set frame!" << std::endl;
+			setHasNewImage(true);
+			this->imgWidth = frame.cols;
+			this->imgHeight = frame.rows;
+			//		this->frame = frame.clone();
+			//		pthread_cond_signal(&runCond);
+			memcpy(imgBuff, frame.data, frame.cols*frame.rows*frame.elemSize()*sizeof(unsigned char));
+//			pthread_mutex_unlock(&runMutex);
+		}
+		else
+		{
+			std::cout << "NULL image buffer" << std::endl;
+		}
+	}

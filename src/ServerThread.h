@@ -20,6 +20,9 @@ public:
 	unsigned char hasFire, hasIntruder;
 
 
+	bool debug_server;
+
+
 
 public:
 //	bool hasFire;
@@ -30,6 +33,7 @@ public:
 	static void handleIntruderDetected(void* arg, int source);
 
 	void sendAlarm(int type);
+	void setDebugPrint(bool debug);
 };
 
 #endif /* SOURCE_RESULTSERVERTHREAD_H_ */

@@ -95,20 +95,21 @@ void* FireThread::runDisplayThread(void* arg)
 		default:
 			break;
 		}
-		int c = waitKey(DELAY_TIME);
-		if( c == 'q' )
-		{
-			break;
-		}
-		else if(c=='f')
-		{
-			//(fireObj->fireDetected)(fireObj->handler);
-
-		}
-		else
-		{
-			//do nothing
-		}
+		usleep(DELAY_TIME*1000);
+//		int c = waitKey(DELAY_TIME);
+//		if( c == 'q' )
+//		{
+//			break;
+//		}
+//		else if(c=='f')
+//		{
+//			//(fireObj->fireDetected)(fireObj->handler);
+//
+//		}
+//		else
+//		{
+//			//do nothing
+//		}
 	}
 	return NULL;
 }
@@ -712,4 +713,8 @@ void FireThread::cvShowManyImages(std::string title, int s_cols, int s_rows, int
 
 	// End the number of arguments
 	va_end(args);
+}
+
+void FireThread::setDebugPrint(bool debug) {
+	debug_fire = debug;
 }

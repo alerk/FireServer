@@ -26,6 +26,7 @@ using namespace std;
 ServerThread::ServerThread() {
 	// TODO Auto-generated constructor stub
 //	initServerThread();
+	debug_server = false;
 
 }
 
@@ -174,4 +175,9 @@ void ServerThread::handleIntruderDetected(void* arg, int source)
 	ServerThread* objServer = (ServerThread*)arg;
 	objServer->sendAlarm(source);
 
+}
+
+void ServerThread::setDebugPrint(bool debug)
+{
+	debug_server = debug;
 }

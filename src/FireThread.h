@@ -17,12 +17,15 @@ class FireThread {
 public:
 	FireThread();
 	virtual ~FireThread();
+	bool 			debug_fire;
 
 private:
 	pthread_t 		fireThread;
 	pthread_t 		displayThread;
 	pthread_mutex_t fireMutex;
 	pthread_cond_t 	fireCond;
+
+
 
 	bool result[MAX_NUMBER_OF_INPUT];
 
@@ -36,7 +39,8 @@ public:
 	void 			connectCallback(CallbackPtr cb, void* cbHandler);
 	static void* 	runFireThread(void* arg);
 	static void* 	runDisplayThread(void* arg);
-	void cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs,...);
+	void 			setDebugPrint(bool debug);
+	void 			cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs,...);
 };
 
 #endif /* SOURCE_FIREDETECTORTHREAD_H_ */

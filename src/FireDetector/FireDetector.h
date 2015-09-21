@@ -72,41 +72,9 @@ public:
 	void start();
 	void join();
 
-	int getFrame(unsigned char* buff)  {
-		if(!isHasNewImage())
-		{
-			return 0;
-		}
-		else
-		{
-			pthread_mutex_lock(&runMutex);
-			unsigned int imgSize = frame.cols*frame.rows*frame.elemSize();
-			setHasNewImage(false);
-			memcpy(buff, frame.data, imgSize);
-			//std::cout << "[FireDetector "<< this->sourceId << "]Return frame!" << std::endl;
-			pthread_mutex_unlock(&runMutex);
-			return 1;
-		}
-	}
+	int getFrame(unsigned char* buff);
 
-	void setFrame(const Mat& frame) {
-		if(imgBuff!=NULL)
-		{
-//			pthread_mutex_lock(&runMutex);
-			//std::cout << "[FireDetector "<< this->sourceId << "]Set frame!" << std::endl;
-			setHasNewImage(true);
-			this->imgWidth = frame.cols;
-			this->imgHeight = frame.rows;
-			//		this->frame = frame.clone();
-			//		pthread_cond_signal(&runCond);
-			memcpy(imgBuff, frame.data, frame.cols*frame.rows*frame.elemSize()*sizeof(unsigned char));
-//			pthread_mutex_unlock(&runMutex);
-		}
-		else
-		{
-			std::cout << "NULL image buffer" << std::endl;
-		}
-	}
+	void setFrame(const Mat& frame);
 
 	bool isHasNewImage() const {
 		return has_new_image;

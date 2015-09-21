@@ -15,6 +15,9 @@ public:
 	IntruderThread();
 	virtual ~IntruderThread();
 
+
+	bool debug_intruder;
+
 public:
 	void 			startIntruderThread();
 	void 			initIntruderThread();
@@ -22,6 +25,7 @@ public:
 	CallbackPtr 	intruderDetected;
 	void*			handler;//Actual object that handles the call
 	void 			connectCallback(CallbackPtr cb, void* cbHandler);
+	void 			setDebugPrint(bool debug);
 };
 
 #endif /* SRC_INTRUDERTHREAD_H_ */
