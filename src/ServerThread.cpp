@@ -5,6 +5,16 @@
  *      Author: quyen
  */
 
+/**
+ * Modified on: Oct 5, 2015
+ * 		Author: quyen
+ * 		Reason:
+ * 			- Server only handles the send message
+ * 			- The message was prepared by the functioning threads
+ *
+ */
+
+#if 0
 #include "ServerThread.h"
 #include "Socket/ServerSocket.h"
 #include "Socket/SocketException.h"
@@ -12,6 +22,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <queue>
 
 #include "ini_parser/iniparser.h"
 #include "CommonDefine.h"
@@ -21,6 +32,8 @@ static void* run(void* arg);
 
 static unsigned char counter = 0;
 static int server_port = 0;
+static queue<unsigned char*> sendBuffer;
+
 using namespace std;
 
 ServerThread::ServerThread() {
@@ -180,4 +193,133 @@ void ServerThread::handleIntruderDetected(void* arg, int source)
 void ServerThread::setDebugPrint(bool debug)
 {
 	debug_server = debug;
+}
+#endif
+
+#include "ServerThread.h"
+#include "Socket/ServerSocket.h"
+#include "Socket/SocketException.h"
+#include <iostream>
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <queue>
+
+#include "ini_parser/iniparser.h"
+#include "CommonDefine.h"
+#include "Util/MessageBuilder.h"
+
+
+using namespace std;
+#define SERVER_PORT 13579
+
+static int server_port = 0;
+
+void ServerThread::startServerThread() {
+	if( pthread_create(&serverThread,NULL,ServerThread::run,(void*)this)!=0)
+	{
+		std::cout << "Fail to create serverThread" << std::endl;
+	}
+	std::cout << "[ServerThread]Start" << std::endl;
+}
+
+void ServerThread::initServerThread() {
+	dictionary* ini;
+	std::string src_str;
+	ini = iniparser_load("Resources/FireServer.conf");
+	if(ini==NULL)
+	{
+		fprintf(stderr, "[serverThread]cannot parse file\n");
+		return;
+	}
+	server_port = iniparser_getint(ini, "server_thread:port",12345);
+	iniparser_freedict(ini);
+	std::cout << "[ServerThread]Init" << std::endl;
+}
+
+void ServerThread::joinServerThread() {
+	pthread_join(serverThread, NULL);
+}
+
+void ServerThread::handleSendData(void* arg, int source, unsigned char* buffer)
+{
+	ServerThread* objServer = (ServerThread*)arg;
+	objServer->pushMessage(buffer);
+
+
+
+}
+
+void* ServerThread::run(void* arg)
+{
+	ServerThread* obj = (ServerThread*)arg;
+	try
+	{
+		ServerSocket listenServer(server_port);
+		while(true)
+		{
+			ServerSocket sendToSocket;
+			cout << "Waiting for client!" << endl;
+			listenServer.accept(sendToSocket);
+			cout << "Client connected!" << endl;
+			while(true)
+			{
+				try
+				{
+					bool isSendOk = sendToSocket.send( (char*)buffer, 5);
+					pthread_mutex_unlock(&(obj->serverMutex));
+					if(!isSendOk)
+					{
+						cout << "Client disconnected" << endl;
+						break;
+					}
+					else
+					{
+						cout << "Client sent: " ;
+						for(int i=0;i<5;i++)
+						{
+							printf("%2.2x ", (unsigned char)buffer[i]);
+						}
+						cout << endl;
+					}
+				}
+				catch(SocketException& e)
+				{
+					std::cout << "Error while accepting client " << e.description() << std::endl;
+				}
+			}
+		}
+	}
+	catch(SocketException& e)
+	{
+		std::cout << "Error while creating server " << e.description() << std::endl;
+	}
+	return NULL;
+
+
+}
+
+void ServerThread::pushMessage(unsigned char* buffer)
+{
+	pthread_mutex_lock(&serverMutex);
+	messageBuffer.push(buffer);
+	pthread_cond_signal(&serverCond);
+	pthread_mutex_unlock(&serverMutex);
+}
+
+void ServerThread::popMessage(unsigned char* buffer)
+{
+	pthread_mutex_lock(&serverMutex);
+	while(!hasMessage())
+	{
+		pthread_cond_wait(&serverCond, &serverMutex);
+	}
+	buffer = messageBuffer.front();
+	messageBuffer.pop();
+	pthread_mutex_unlock(&serverMutex);
+}
+
+bool ServerThread::hasMessage()
+{
+	return !(messageBuffer.empty());
 }
