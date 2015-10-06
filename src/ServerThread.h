@@ -16,9 +16,10 @@ public:
 	ServerThread();
 	virtual ~ServerThread();
 //private:
-	pthread_t 		serverThread;
-	pthread_mutex_t serverMutex;
-	pthread_cond_t 	serverCond;
+	pthread_t 			serverThread;
+	pthread_mutex_t 	serverMutex;
+	pthread_cond_t 	bufferEmpty;
+	pthread_cond_t 	bufferFull;
 
 	unsigned char hasFire, hasIntruder;
 	bool debug_server;
@@ -34,15 +35,17 @@ public:
 	void startServerThread();
 	void initServerThread();
 	void joinServerThread();
-	static void handleSendData(void* arg, int source, unsigned char* data);
 
-#if 0
+#ifdef SINGLE_PROCESS
 	static void handleFireDetected(void* arg, int source);
 	static void handleIntruderDetected(void* arg, int source);
+#else
+	static void handleSendData(void* arg, unsigned char* data);
 #endif
-	void pushMessage(unsigned char* buffer);
-	void popMessage(unsigned char* buffer);
+	void enqueueMessage(unsigned char* buffer);
+	void dequeueMessage(unsigned char* buffer);
 	bool hasMessage();
+	bool isBufferFull();
 	void sendAlarm(int type);
 	void setDebugPrint(bool debug);
 	static void* run(void* args);

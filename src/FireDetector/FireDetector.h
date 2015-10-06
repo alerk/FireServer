@@ -14,15 +14,13 @@
 
 
 #include <pthread.h>
-#include <sys/time.h>       /* for setitimer */
+#include <sys/time.h>       /* for set itimer */
 #include <unistd.h>     /* for pause */
-#include <signal.h>     /* for signal */
-#include <stdio.h>
-#include <stdlib.h>
 #include <iostream>
 
 #include "../DisplayThread.h"
 
+typedef void (*CallbackPtr)(void*, unsigned char*);
 
 using namespace cv;
 class FireDetector {
@@ -32,33 +30,26 @@ public:
 	int getFirePixelNumber(Mat input);
 	int getFirePixelNumber(BackgroundSubtractorMOG2 bg, Mat frame, Mat back, Mat front);
 
-	int getSourceId() const {
-		return sourceId;
-	}
 
-	int getImgHeight() const {
-		return imgHeight;
-	}
+	int getSourceId() const;
+	int getImgHeight() const;
+	int getImgWidth() const;
+	void setImgHeight(int imgHeight);
+	void setImgWidth(int imgWidth);
+	int getFireThreshold() const ;
+	void setSourceId(int sourceId);
+	void init();
+	void start();
+	void join();
 
-	int getImgWidth() const {
-		return imgWidth;
-	}
+	int getFrame(unsigned char* buff);
 
-	void setImgHeight(int imgHeight) {
-		this->imgHeight = imgHeight;
-	}
+	void setFrame(const Mat& frame);
+	void connectCallback(CallbackPtr cb, void* cbHandler);
 
-	void setImgWidth(int imgWidth) {
-		this->imgWidth = imgWidth;
-	}
-
-	int getFireThreshold() const {
-		return fireThreshold;
-	}
-
-	void setSourceId(int sourceId) {
-		this->sourceId = sourceId;
-	}
+	bool isHasNewImage() const;
+	void setHasNewImage(bool hasNewImage);
+	void setBuffer(unsigned char* buff);
 
 	bool isFire;
 	VideoCapture capture;
@@ -68,38 +59,18 @@ public:
 	pthread_mutex_t runMutex;
 	pthread_cond_t 	runCond;
 
-	void init();
-	void start();
-	void join();
-
-	int getFrame(unsigned char* buff);
-
-	void setFrame(const Mat& frame);
-
-	bool isHasNewImage() const {
-		return has_new_image;
-	}
-
-	void setHasNewImage(bool hasNewImage) {
-		has_new_image = hasNewImage;
-	}
-
-	void setBuffer(unsigned char* buff)
-	{
-		imgBuff = buff;
-	}
-
+	//callback function variables
+	CallbackPtr 	videoCaptured;
+	void*			handler;
 private:
 	int sourceId;
 	std::string sourceName;
 	std::string sourceVideo;
 	int fireThreshold;
 	bool has_new_image;
-	//DisplayThread* display;
-
 	//timer
 	struct itimerval it_val;
-
+	//opencv
 	Mat frame;
 	Mat back;
 	Mat front;
@@ -108,14 +79,7 @@ private:
 	unsigned char* imgBuff;
 
 	void cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs, ...);
-
-
-
-	static void* captureFrame(void* arg);
 	static void* run(void* arg);
-
-
-
 };
 
 #endif /* SRC_FIREDETECTOR_FIREDETECTOR_H_ */

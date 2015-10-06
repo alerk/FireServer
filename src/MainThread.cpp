@@ -60,9 +60,16 @@ void MainThread::initMainThread() {
 	intruderObj->initIntruderThread();
 	intruderObj->setDebugPrint(debug_print);
 
+
+
 	//assign callback from fireObj to serverObj
+#ifdef SINGLE_PROCESS
 	fireObj->connectCallback(ServerThread::handleFireDetected, serverObj);
 	intruderObj->connectCallback(ServerThread::handleIntruderDetected, serverObj);
+#else
+	fireObj->connectCallback(ServerThread::handleSendData, serverObj);
+	fireObj->connectCallback(ServerThread::handleSendData, serverObj);
+#endif
 
 	std::cout << "[Main Thread]Init" << std::endl;
 

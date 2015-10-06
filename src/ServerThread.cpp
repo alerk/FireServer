@@ -14,7 +14,7 @@
  *
  */
 
-#if 0
+#ifdef SINGLE_PROCESS
 #include "ServerThread.h"
 #include "Socket/ServerSocket.h"
 #include "Socket/SocketException.h"
@@ -190,11 +190,10 @@ void ServerThread::handleIntruderDetected(void* arg, int source)
 
 }
 
-void ServerThread::setDebugPrint(bool debug)
-{
-	debug_server = debug;
-}
-#endif
+
+#else
+
+
 
 #include "ServerThread.h"
 #include "Socket/ServerSocket.h"
@@ -213,7 +212,9 @@ void ServerThread::setDebugPrint(bool debug)
 using namespace std;
 #define SERVER_PORT 13579
 
+static unsigned char network_buffer[SOCKET_BUFFER_SIZE];
 static int server_port = 0;
+const unsigned int MAX_BUFFER_SIZE = 300;
 
 void ServerThread::startServerThread() {
 	if( pthread_create(&serverThread,NULL,ServerThread::run,(void*)this)!=0)
@@ -241,13 +242,10 @@ void ServerThread::joinServerThread() {
 	pthread_join(serverThread, NULL);
 }
 
-void ServerThread::handleSendData(void* arg, int source, unsigned char* buffer)
+void ServerThread::handleSendData(void* arg, unsigned char* buffer)
 {
 	ServerThread* objServer = (ServerThread*)arg;
-	objServer->pushMessage(buffer);
-
-
-
+	objServer->enqueueMessage(buffer);
 }
 
 void* ServerThread::run(void* arg)
@@ -266,21 +264,16 @@ void* ServerThread::run(void* arg)
 			{
 				try
 				{
-					bool isSendOk = sendToSocket.send( (char*)buffer, 5);
-					pthread_mutex_unlock(&(obj->serverMutex));
-					if(!isSendOk)
+					dequeueMessage(&(network_buffer[0]));
+					int sentSize = sendToSocket.send( (const char*)(&(network_buffer[0])), SOCKET_BUFFER_SIZE);
+					if(sentSize<0)
 					{
 						cout << "Client disconnected" << endl;
 						break;
 					}
 					else
 					{
-						cout << "Client sent: " ;
-						for(int i=0;i<5;i++)
-						{
-							printf("%2.2x ", (unsigned char)buffer[i]);
-						}
-						cout << endl;
+						cout << "Client sent: "<< sentSize << endl;
 					}
 				}
 				catch(SocketException& e)
@@ -299,27 +292,42 @@ void* ServerThread::run(void* arg)
 
 }
 
-void ServerThread::pushMessage(unsigned char* buffer)
+void ServerThread::enqueueMessage(unsigned char* buffer)
 {
 	pthread_mutex_lock(&serverMutex);
+	while(isBufferFull())
+	{
+		pthread_cond_wait(&bufferFull, &serverMutex);
+	}
 	messageBuffer.push(buffer);
-	pthread_cond_signal(&serverCond);
+	pthread_cond_signal(&bufferEmpty);
 	pthread_mutex_unlock(&serverMutex);
 }
 
-void ServerThread::popMessage(unsigned char* buffer)
+void ServerThread::dequeueMessage(unsigned char* buffer)
 {
 	pthread_mutex_lock(&serverMutex);
 	while(!hasMessage())
 	{
-		pthread_cond_wait(&serverCond, &serverMutex);
+		pthread_cond_wait(&bufferEmpty, &serverMutex);
 	}
-	buffer = messageBuffer.front();
+	memcpy(buffer, messageBuffer.front(), SOCKET_BUFFER_SIZE*sizeof(unsigned char));
 	messageBuffer.pop();
+	pthread_cond_signal(&bufferFull);
 	pthread_mutex_unlock(&serverMutex);
 }
 
 bool ServerThread::hasMessage()
 {
 	return !(messageBuffer.empty());
+}
+
+bool ServerThread::isBufferFull()
+{
+	return (messageBuffer.size() >= MAX_BUFFER_SIZE);
+}
+#endif
+void ServerThread::setDebugPrint(bool debug)
+{
+	debug_server = debug;
 }

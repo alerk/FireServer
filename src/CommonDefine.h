@@ -15,6 +15,6 @@
 #define MSG_TYPE_INTRUDER	1
 #define MSG_TYPE_VIDEO		2
 
-
+#define SOCKET_BUFFER_SIZE 230450
 
 #endif /* SRC_COMMONDEFINE_H_ */

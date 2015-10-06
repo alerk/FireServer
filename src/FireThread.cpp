@@ -11,12 +11,9 @@
 #include <stdio.h>
 #include <vector>
 #include <stdarg.h>
-
+#include "ini_parser/iniparser.h"
 #include "CommonDefine.h"
 
-#define DELAY_TIME 60
-#define RUN_CPP 1
-#define MAX_CAM_DISPLAY 4
 
 #if RUN_CPP
 	#include "FireDetector/FireDetector.h"
@@ -33,12 +30,18 @@
 	#include "FireDetector/Config.h"
 #endif
 
-#include "ini_parser/iniparser.h"
+#define DELAY_TIME 60
+#define RUN_CPP 1
+#define MAX_CAM_DISPLAY 4
+
+
 
 //void* runFireThread(void* arg);
 const bool DEBUG = true;
 int num_of_source;
 static int fire_instant_counter = 0;
+
+
 #if RUN_CPP
 	FireDetector* objFireDetector;
 	cv::VideoCapture capture_;
@@ -49,8 +52,6 @@ static int fire_instant_counter = 0;
 	const int unsigned SIZE_3 = 280;
 
 	unsigned char* s[MAX_CAM_DISPLAY];
-	//unsigned char* s1[MAX_CAM_DISPLAY];
-
 
 #else
 static CvCapture* capture;
@@ -78,6 +79,7 @@ void* FireThread::runDisplayThread(void* arg)
 	namedWindow("Display window", WINDOW_AUTOSIZE);
 	while(true)
 	{
+#ifdef SINGLE_PROCESS
 		switch(num_of_display)
 		{
 		case 1:
@@ -95,21 +97,8 @@ void* FireThread::runDisplayThread(void* arg)
 		default:
 			break;
 		}
+#endif
 		usleep(DELAY_TIME*1000);
-//		int c = waitKey(DELAY_TIME);
-//		if( c == 'q' )
-//		{
-//			break;
-//		}
-//		else if(c=='f')
-//		{
-//			//(fireObj->fireDetected)(fireObj->handler);
-//
-//		}
-//		else
-//		{
-//			//do nothing
-//		}
 	}
 	return NULL;
 }
@@ -167,28 +156,16 @@ void* FireThread::runFireThread(void* arg)
 			FireDetector* temp = vectorDetector.at(id);
 			if(temp->isFire)
 			{
+#ifdef SINGLE_PROCESS
 				(fireObj->fireDetected)(fireObj->handler, temp->getSourceId());
+#else
+				MessageBuilder::buildFireAlarm(&(fireObj->msg_buffer[0]), temp->getSourceId());
+				(fireObj->fireDetected)(fireObj->handler, &(fireObj->msg_buffer[0]));
+#endif
 				temp->isFire = false;
 			}
-//			if(id<num_of_display)
-//			{
-//				has_image = true;
-//				memset(s1, 0, 640*480*3*sizeof(unsigned char));
-//				int hasNewFrame = temp->getFrame(s1[id]);
-//				if(hasNewFrame)
-//				{
-//					memcpy(s, s1, 640*480*3*sizeof(unsigned char));
-//				}
-//				else
-//				{
-//
-//				}
-//				std::cout << "[FireThread]Get frame of " << temp->getSourceId() << (hasNewFrame?", new frame":", old frame") << std::endl;
-////				s[id] = Mat(640, 480, CV_8UC3, buff);
-//			}
 		}
 		//-------------ending----------------//
-
 		usleep(DELAY_TIME);
 	}
 #endif
@@ -498,7 +475,6 @@ void FireThread::startFireThread()
 //		temp->join();
 //	}
 	std::cout << "[FireThread]Start" << std::endl;
-
 }
 
 void FireThread::initFireThread()
@@ -564,13 +540,14 @@ void FireThread::initFireThread()
 		std::string source = iniparser_getstring(ini,temp_src,"Resources/usnMR6I_EAQ.mp4");
 		int threshold = iniparser_getint(ini, temp_threshold, 10);
 		FireDetector* fireDet = new FireDetector(i, temp, source, threshold);
+#ifdef SINGLE_PROCESS
 		if(i<num_of_source && i<MAX_CAM_DISPLAY)
 		{
 			fireDet->setBuffer(s[i]);
 		}
-//		fireDet->join();
-		vectorDetector.push_back(fireDet);
+#endif
 		fireDet->init();
+		vectorDetector.push_back(fireDet);
 	}
 	iniparser_freedict(ini);
 #endif

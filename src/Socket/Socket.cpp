@@ -224,21 +224,22 @@ void Socket::set_non_blocking ( const bool b )
 
 }
 
-bool Socket::send(const char* send_buff, int size) const {
+int Socket::send(const char* send_buff, int size) const {
 	if (DEBUG)
 	{
 		cout << "send m_sock : " << m_sock << endl;
 	}
 
 	int status = ::send ( m_sock, send_buff, size, MSG_NOSIGNAL );
-	if ( status == -1 )
-	{
-		return false;
-	}
-	else
-	{
-		return true;
-	}
+	return status;
+//	if ( status == -1 )
+//	{
+//		return false;
+//	}
+//	else
+//	{
+//		return true;
+//	}
 
 }
 

@@ -105,7 +105,12 @@ static void* run(void* arg)
 				if(recv_buf[4]==0x01)
 				{
 //					cout << "\t ====> Intruder!" << endl;
+#ifdef SINGLE_PROCESS
 					(obj->intruderDetected)(obj->handler, SRC_INTRUDER);
+#else
+					MessageBuilder::buildIntruderAlarm(&(obj->msg_buffer[0]) ,SRC_INTRUDER );
+					(obj->intruderDetected)(obj->handler, &(obj->msg_buffer[0]));
+#endif
 				}
 				//				printf("\n");
 			}
