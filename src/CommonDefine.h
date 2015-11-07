@@ -17,4 +17,6 @@
 
 #define SOCKET_BUFFER_SIZE 230450
 
+//#define SINGLE_PROCESS
+
 #endif /* SRC_COMMONDEFINE_H_ */

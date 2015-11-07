@@ -33,6 +33,7 @@ FireDetector::FireDetector(int id, std::string name, std::string input, int thre
 	sourceName = name;
 	sourceVideo = input;
 	fireThreshold = threshold;
+	imgBuff = NULL;
 
 	char wName[25];
 	sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
@@ -51,6 +52,11 @@ FireDetector::~FireDetector()
 }
 
 int FireDetector::getFirePixelNumber(Mat aFrame) {
+	const int ROI_WIDTH = 40;
+	const int ROI_HEIGHT = 30;
+	unsigned int currentWidth = 0, currentHeight = 0;
+	Rect roi;
+	unsigned int width, height;
 	std::vector<std::vector<cv::Point> > contours;
 
 	Mat YCrCbFrame;
@@ -63,6 +69,8 @@ int FireDetector::getFirePixelNumber(Mat aFrame) {
 	{
 		return -1;
 	}
+	width = aFrame.cols;
+	height = aFrame.rows;
 	//---------------detect moving pixel------------//
 	//       using BackgroundSubstractMOG2 			//
 	//----------------------------------------------//
@@ -122,6 +130,23 @@ int FireDetector::getFirePixelNumber(Mat aFrame) {
 	//colorMask = front & Y_Cb & Y_Cr
 	bitwise_and(front, Y_Cb, colorMask);
 	bitwise_and(colorMask, Cr_Cb, colorMask);
+
+	for(currentWidth = 0; currentWidth < width; currentWidth+=ROI_WIDTH)
+	    {
+	        for(currentHeight = 0; currentHeight < height; currentHeight+=ROI_HEIGHT)
+	        {
+	            roi = Rect(currentWidth, currentHeight, ROI_WIDTH, ROI_HEIGHT);
+	            cv::Mat testArea = colorMask(roi);
+	            int fireCount = countNonZero(testArea);
+	            if(fireCount > 10)
+	            {
+	                cv::Mat roi_draw = aFrame(roi);
+	                cv::Mat color(roi_draw.size(), CV_8UC3, cv::Scalar (0,125,125));
+	                double alpha = 0.5;
+	                cv::addWeighted(color, alpha, roi_draw, 1.0-alpha, 0.0, roi_draw);
+	            }
+	        }
+	    }
 
 	int fireCount = countNonZero(colorMask);
 
@@ -202,7 +227,7 @@ void* FireDetector::run(void* arg)
 		obj->setFrame(aFrame);
 #else
 		cv::resize(tempFrame, sendFrame, cv::Size(320,240), 0, 0, cv::INTER_CUBIC);
-		MessageBuilder::buildVideo(msg_buffer,obj->getSourceId(),320, 240, 3, 1, 1, 320*240*3, sendFrame.data);
+		MessageBuilder::buildMessage(MSG_TYPE_VIDEO, msg_buffer, 8, obj->getSourceId(),320, 240, 3, 1, 1, 320*240*3, sendFrame.data);
 		(obj->videoCaptured)(obj->handler, &(msg_buffer[0]));
 #endif
 //		int start_s=clock();

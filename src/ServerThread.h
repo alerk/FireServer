@@ -15,20 +15,20 @@ class ServerThread {
 public:
 	ServerThread();
 	virtual ~ServerThread();
-//private:
-	pthread_t 			serverThread;
-	pthread_mutex_t 	serverMutex;
-	pthread_cond_t 	bufferEmpty;
-	pthread_cond_t 	bufferFull;
 
 	unsigned char hasFire, hasIntruder;
 	bool debug_server;
 
+private:
+	std::queue<unsigned char*> messageBuffer;
+	bool isLockedWrite, isLockedRead;
 
 private:
-	static std::queue<unsigned char*> messageBuffer;
-
-
+	pthread_t 			serverThread;
+	pthread_t 			monitorThread;
+	pthread_mutex_t 	serverMutex;
+	pthread_cond_t 	bufferEmpty;
+	pthread_cond_t 	bufferFull;
 
 public:
 //	bool hasFire;
@@ -44,11 +44,13 @@ public:
 #endif
 	void enqueueMessage(unsigned char* buffer);
 	void dequeueMessage(unsigned char* buffer);
-	bool hasMessage();
+	bool isBufferEmpty();
 	bool isBufferFull();
+	void checkQueueStatus();
 	void sendAlarm(int type);
 	void setDebugPrint(bool debug);
 	static void* run(void* args);
+	static void* monitor(void* args);
 };
 
 #endif /* SOURCE_RESULTSERVERTHREAD_H_ */

@@ -7,8 +7,9 @@
 
 #include <stdarg.h>
 #include <iostream>
+#include <string.h>
 #include "MessageBuilder.h"
-#include "CommonDefine.h"
+#include "../CommonDefine.h"
 
 MessageBuilder::MessageBuilder() {
 	// TODO Auto-generated constructor stub

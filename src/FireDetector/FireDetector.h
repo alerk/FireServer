@@ -78,7 +78,7 @@ private:
 	int imgWidth, imgHeight;
 	unsigned char* imgBuff;
 
-	void cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs, ...);
+	//void cvShowManyImages(std::string title, int s_cols, int s_rows, int nArgs, ...);
 	static void* run(void* arg);
 };
 

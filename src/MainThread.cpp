@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <tr1/functional>
 
+#include "ini_parser/iniparser.h"
+
 static void* run(void* arg);
 MainThread::MainThread() {
 	// TODO Auto-generated constructor stub

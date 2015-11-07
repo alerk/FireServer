@@ -12,7 +12,7 @@
 #include "Socket/ClientSocket.h"
 #include "Socket/SocketException.h"
 #include "ini_parser/iniparser.h"
-#include "CommonDefine.h"
+#include "Util/MessageBuilder.h"
 
 #define DEFAULT_IP 		"192.168.100.103"
 #define DEFAULT_PORT 	112233
@@ -108,7 +108,7 @@ static void* run(void* arg)
 #ifdef SINGLE_PROCESS
 					(obj->intruderDetected)(obj->handler, SRC_INTRUDER);
 #else
-					MessageBuilder::buildIntruderAlarm(&(obj->msg_buffer[0]) ,SRC_INTRUDER );
+					MessageBuilder::buildMessage(MSG_TYPE_INTRUDER, &(obj->msg_buffer[0]), 1 , SRC_INTRUDER );
 					(obj->intruderDetected)(obj->handler, &(obj->msg_buffer[0]));
 #endif
 				}

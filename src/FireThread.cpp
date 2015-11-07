@@ -6,17 +6,18 @@
  */
 
 #include "FireThread.h"
-#include <iostream>
 #include <unistd.h>
 #include <stdio.h>
 #include <vector>
 #include <stdarg.h>
 #include "ini_parser/iniparser.h"
-#include "CommonDefine.h"
+
+#define RUN_CPP 1
 
 
 #if RUN_CPP
 	#include "FireDetector/FireDetector.h"
+	#include "Util/MessageBuilder.h"
 #else
 	#include "opencv2/core/core.hpp"
 	#include "opencv2/imgproc/imgproc.hpp"
@@ -31,7 +32,7 @@
 #endif
 
 #define DELAY_TIME 60
-#define RUN_CPP 1
+
 #define MAX_CAM_DISPLAY 4
 
 
@@ -159,7 +160,7 @@ void* FireThread::runFireThread(void* arg)
 #ifdef SINGLE_PROCESS
 				(fireObj->fireDetected)(fireObj->handler, temp->getSourceId());
 #else
-				MessageBuilder::buildFireAlarm(&(fireObj->msg_buffer[0]), temp->getSourceId());
+				MessageBuilder::buildMessage(MSG_TYPE_FIREALARM, &(fireObj->msg_buffer[0]), 1,  temp->getSourceId());
 				(fireObj->fireDetected)(fireObj->handler, &(fireObj->msg_buffer[0]));
 #endif
 				temp->isFire = false;
