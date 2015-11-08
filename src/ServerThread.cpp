@@ -22,6 +22,8 @@ static void* run(void* arg);
 static unsigned char counter = 0;
 static int server_port = 0;
 using namespace std;
+unsigned char sendBuffer[MSG_BUFFER_SIZE];
+unsigned char hasBuffer = 0;
 
 ServerThread::ServerThread() {
 	// TODO Auto-generated constructor stub
@@ -61,6 +63,51 @@ void ServerThread::joinServerThread() {
 }
 
 static void* run(void* arg)
+{
+	ServerThread* obj = (ServerThread*)arg;
+	try{
+
+		ServerSocket listenServer(server_port);
+		while(true)
+		{
+			ServerSocket sendToSocket;
+			cout << "Waiting for client!" << endl;
+			listenServer.accept(sendToSocket);
+			cout << "Client connected!" << endl;
+			while(true)
+			{
+				try{
+					pthread_mutex_lock(&(obj->serverMutex));
+					while(hasBuffer==0)
+					{
+						pthread_cond_wait(&(obj->serverCond), &(obj->serverMutex));
+					}
+					bool isSendOk = sendToSocket.send( (char*)sendBuffer, sizeof(sendBuffer));
+					hasBuffer = 0;
+					pthread_mutex_unlock(&(obj->serverMutex));
+					if(!isSendOk)
+					{
+						cout << "Client disconnected" << endl;
+						break;
+					}
+				}
+				catch(SocketException& e)
+				{
+					std::cout << "Error while accepting client " << e.description() << std::endl;
+					break;
+				}
+				sleep(2);
+			}
+		}
+	}
+	catch(SocketException& e)
+	{
+		std::cout << "Error while creating server " << e.description() << std::endl;
+	}
+	return NULL;
+}
+
+static void* __run(void* arg)
 {
 	ServerThread* obj = (ServerThread*)arg;
 	try{
@@ -130,8 +177,6 @@ static void* run(void* arg)
 		std::cout << "Error while creating server " << e.description() << std::endl;
 	}
 	return NULL;
-
-
 }
 
 void ServerThread::sendAlarm(int type) {
@@ -167,6 +212,28 @@ void ServerThread::handleFireDetected(void* arg, int source)
 	ServerThread* objServer = (ServerThread*)arg;
 	objServer->sendAlarm(source);
 
+}
+
+void ServerThread::handleVideoReady(void* arg, unsigned char* buffer)
+{
+	ServerThread* objServer = (ServerThread*)arg;
+	pthread_mutex_lock(&(objServer->serverMutex));
+	hasBuffer = 1;
+	sendBuffer[0] = 0xff;
+	sendBuffer[1] = 0xff;
+	sendBuffer[2] = 0xaa;
+	sendBuffer[3] = 0x55;
+	sendBuffer[4] = 0x02;
+	sendBuffer[5] = 5;
+	sendBuffer[6] = 32;
+	sendBuffer[7] = 24;
+	sendBuffer[8] = 3;
+	sendBuffer[9] = 1;
+	sendBuffer[10] = 1;
+	memcpy(&(sendBuffer[11]), buffer, 4*321*241*3);
+	pthread_cond_signal(&(objServer->serverCond));
+	//build message here
+	pthread_mutex_unlock(&(objServer->serverMutex));
 }
 
 void ServerThread::handleIntruderDetected(void* arg, int source)

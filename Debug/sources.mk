@@ -25,6 +25,7 @@ CPP_DEPS :=
 SUBDIRS := \
 src \
 src/ini_parser \
+src/Util \
 src/Socket \
 src/FireDetector \
 Resources \

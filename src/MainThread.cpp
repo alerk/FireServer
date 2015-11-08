@@ -45,6 +45,7 @@ void MainThread::initMainThread() {
 
 	//assign callback from fireObj to serverObj
 	fireObj->connectCallback(ServerThread::handleFireDetected, serverObj);
+	fireObj->connectCallbackVideo(ServerThread::handleVideoReady, serverObj);
 	intruderObj->connectCallback(ServerThread::handleIntruderDetected, serverObj);
 
 	std::cout << "Main Thread" << std::endl;
