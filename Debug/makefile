@@ -9,6 +9,7 @@ RM := rm -rf
 # All of the sources participating in the build are defined here
 -include sources.mk
 -include src/ini_parser/subdir.mk
+-include src/Util/subdir.mk
 -include src/Socket/subdir.mk
 -include src/FireDetector/subdir.mk
 -include src/subdir.mk

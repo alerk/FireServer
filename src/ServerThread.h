@@ -8,6 +8,7 @@
 #ifndef SOURCE_RESULTSERVERTHREAD_H_
 #define SOURCE_RESULTSERVERTHREAD_H_
 #include <pthread.h>
+#include <queue>
 class ServerThread {
 public:
 	ServerThread();
@@ -18,6 +19,9 @@ public:
 	pthread_cond_t 	serverCond;
 
 	unsigned char hasFire, hasIntruder;
+
+	std::queue<unsigned char*> videoBufferQueue;
+
 
 
 	bool debug_server;
@@ -31,8 +35,10 @@ public:
 	void joinServerThread();
 	static void handleFireDetected(void* arg, int source);
 	static void handleIntruderDetected(void* arg, int source);
+	static void handleVideoReady(void* arg, unsigned char* buffer);
 
 	void sendAlarm(int type);
+
 	void setDebugPrint(bool debug);
 };
 

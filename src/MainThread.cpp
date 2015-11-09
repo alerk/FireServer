@@ -8,7 +8,8 @@
 #include "MainThread.h"
 #include <iostream>
 #include <unistd.h>
-#include <tr1/functional>
+
+#include "ini_parser/iniparser.h"
 
 static void* run(void* arg);
 MainThread::MainThread() {
@@ -62,6 +63,7 @@ void MainThread::initMainThread() {
 
 	//assign callback from fireObj to serverObj
 	fireObj->connectCallback(ServerThread::handleFireDetected, serverObj);
+	fireObj->connectCallbackVideo(ServerThread::handleVideoReady, serverObj);
 	intruderObj->connectCallback(ServerThread::handleIntruderDetected, serverObj);
 
 	std::cout << "[Main Thread]Init" << std::endl;

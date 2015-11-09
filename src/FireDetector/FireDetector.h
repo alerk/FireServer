@@ -29,8 +29,7 @@ class FireDetector {
 public:
 	FireDetector(int id, std::string name, std::string input, int threshold);
 	virtual ~FireDetector();
-	int getFirePixelNumber(Mat input);
-	int getFirePixelNumber(BackgroundSubtractorMOG2 bg, Mat frame, Mat back, Mat front);
+	int getFirePixelNumber(Mat& input);
 
 	int getSourceId() const {
 		return sourceId;
