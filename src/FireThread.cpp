@@ -43,7 +43,7 @@ static int fire_instant_counter = 0;
 	FireDetector* objFireDetector;
 	cv::VideoCapture capture_;
 	std::vector<FireDetector*> vectorDetector;
-	const int unsigned GAP = 10;
+	const int unsigned GAP = 0;
 	const int unsigned SIZE_1 = 360;
 	const int unsigned SIZE_2 = 320;
 	const int unsigned SIZE_3 = 280;
@@ -76,7 +76,7 @@ void* FireThread::runDisplayThread(void* arg)
 {
 	FireThread* fireObj = (FireThread*)arg;
 	int num_of_display = (num_of_source>MAX_CAM_DISPLAY)?MAX_CAM_DISPLAY:num_of_source;
-	namedWindow("Display window", WINDOW_AUTOSIZE);
+//	namedWindow("Display window", WINDOW_AUTOSIZE);
 	while(true)
 	{
 		switch(num_of_display)
@@ -99,6 +99,7 @@ void* FireThread::runDisplayThread(void* arg)
 			break;
 		}
 		(fireObj->videoReady)(fireObj->handler, sendFrame.data);
+//		cv::imshow("Display window", sendFrame);
 		usleep(DELAY_TIME*1000);
 	}
 	return NULL;

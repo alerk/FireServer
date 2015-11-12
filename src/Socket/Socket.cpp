@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 using namespace std;
 
@@ -224,75 +225,28 @@ void Socket::set_non_blocking ( const bool b )
 
 }
 
-bool Socket::send(const char* send_buff, int size) const {
+int Socket::send(const char* send_buff, int size) const {
 	if (DEBUG)
 	{
 		cout << "send m_sock : " << m_sock << endl;
 	}
 
-	int status = ::send ( m_sock, send_buff, size, MSG_NOSIGNAL );
-	if ( status == -1 )
-	{
-		return false;
-	}
-	else
-	{
-		return true;
-	}
-
+    int status = ::send ( m_sock, send_buff, size, MSG_NOSIGNAL);
+	return status;
 }
 
 int Socket::recv(char* recv_buff, int size = MAXRECV) const {
-	char buf [ MAXRECV + 1 ];
+    char* buf = (char*)malloc(MAXRECV + 1);
 
-	std::string s = "";
+    memset ( buf, 0, MAXRECV + 1 );
 
-	memset ( buf, 0, MAXRECV + 1 );
-
-
-	if (DEBUG)
-	{
-		cout << "recv m_sock : " << m_sock << endl;
-	}
-
-	int status = ::recv ( m_sock, buf, MAXRECV, 0 );
+    int status = ::recv ( m_sock, buf, size, MSG_EOR);
 	if(size>status)
 	{
 		size = status;
 	}
 	memcpy(recv_buff, buf, size);
 
-	if (DEBUG)
-	{
-		cout << "recv status = " << status << endl;
-	}
-
-	if ( status == -1 )
-	{
-		if (DEBUG)
-		{
-			cout << "m_sock " << m_sock << " recv and s = " << s << endl;
-		}
-		std::cout << "status == -1   errno == " << errno << "  in Socket::recv\n";
-		return 0;
-	}
-	else if ( status == 0 )
-	{
-		if (DEBUG)
-		{
-			cout << "m_sock " << m_sock << " recv and s = " << s << endl;
-		}
-
-		return 0;
-	}
-	else
-	{
-		//s = buf;
-		if (DEBUG)
-		{
-			cout << "m_sock " << m_sock << " recv and s = " << s << endl;
-		}
-
-		return status;
-	}
+    free(buf);
+    return status;
 }

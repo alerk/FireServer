@@ -42,6 +42,10 @@ void ServerThread::startServerThread() {
 	{
 		std::cout << "Fail to create serverThread" << std::endl;
 	}
+//	if( pthread_create(&monitorServerThread,NULL,ServerThread::monitor,(void*)this)!=0)
+//		{
+//			std::cout << "Fail to create monitorServerThread" << std::endl;
+//		}
 	std::cout << "[ServerThread]Start" << std::endl;
 }
 
@@ -54,7 +58,7 @@ void ServerThread::initServerThread() {
 		fprintf(stderr, "[serverThread]cannot parse file\n");
 		return;
 	}
-	server_port = iniparser_getint(ini, "server_thread:port",12345);
+	server_port = iniparser_getint(ini, "server_thread:port",13579);
 	iniparser_freedict(ini);
 	std::cout << "[ServerThread]Init" << std::endl;
 }
@@ -78,27 +82,39 @@ static void* run(void* arg)
 			while(true)
 			{
 				try{
-					pthread_mutex_lock(&(obj->serverMutex));
-					while(hasBuffer==0)
+//					cout << "Inside loop!" << endl;
+//					pthread_mutex_trylock(&(obj->serverMutex));
+//					while(hasBuffer<=0)
+//					{
+////						std::cout << "Under lock server" << std::endl;
+////						pthread_cond_wait(&(obj->hasImgCond), &(obj->serverMutex));
+//					}
+					if(hasBuffer>0)
 					{
-						pthread_cond_wait(&(obj->serverCond), &(obj->serverMutex));
-					}
-					bool isSendOk = sendToSocket.send( (char*)sendBuffer, sizeof(sendBuffer));
-					hasBuffer = 0;
-					pthread_mutex_unlock(&(obj->serverMutex));
-					if(!isSendOk)
+
+//					std::cout << "Prepare to send" << std::endl;
+					int sendSize = sendToSocket.send( (char*)sendBuffer, sizeof(sendBuffer));
+					hasBuffer--;
+//					pthread_mutex_unlock(&(obj->serverMutex));
+					if(sendSize<0)
 					{
 						cout << "Client disconnected" << endl;
 						break;
 					}
+					else
+					{
+						cout << "Send to client " << sendSize << " bytes" << endl;
+					}
+					}
+					usleep(1);
 				}
 				catch(SocketException& e)
 				{
 					std::cout << "Error while accepting client " << e.description() << std::endl;
 					break;
 				}
-				sleep(2);
 			}
+			sleep(2);
 		}
 	}
 	catch(SocketException& e)
@@ -218,23 +234,20 @@ void ServerThread::handleFireDetected(void* arg, int source)
 void ServerThread::handleVideoReady(void* arg, unsigned char* buffer)
 {
 	ServerThread* objServer = (ServerThread*)arg;
-	pthread_mutex_lock(&(objServer->serverMutex));
-	hasBuffer = 1;
+//	pthread_mutex_trylock(&(objServer->serverMutex));
+//	while(hasBuffer)
+//	{
+//		pthread_cond_wait(&(objServer->noImgCond),&(objServer->serverMutex));
+//	}
+//	std::cout << "Has image to send" << std::endl;
+	hasBuffer++;
 	sendBuffer[0] = 0xff;
 	sendBuffer[1] = 0xff;
 	sendBuffer[2] = 0xaa;
 	sendBuffer[3] = 0x55;
-	sendBuffer[4] = 0x02;
-	sendBuffer[5] = 5;
-	sendBuffer[6] = 32;
-	sendBuffer[7] = 24;
-	sendBuffer[8] = 3;
-	sendBuffer[9] = 1;
-	sendBuffer[10] = 1;
-	memcpy(&(sendBuffer[11]), buffer, 4*321*241*3);
-	pthread_cond_signal(&(objServer->serverCond));
-	//build message here
-	pthread_mutex_unlock(&(objServer->serverMutex));
+	memcpy(&(sendBuffer[4]), buffer, MSG_BUFFER_SIZE-4);
+
+//	pthread_mutex_unlock(&(objServer->serverMutex));
 }
 
 void ServerThread::handleIntruderDetected(void* arg, int source)
@@ -242,6 +255,30 @@ void ServerThread::handleIntruderDetected(void* arg, int source)
 	ServerThread* objServer = (ServerThread*)arg;
 	objServer->sendAlarm(source);
 
+}
+
+void* ServerThread::monitor(void* arg)
+{
+	ServerThread* obj = (ServerThread*)arg;
+	while(true)
+	{
+//		pthread_mutex_lock(&(obj->serverMutex));
+//		if(hasBuffer)
+//		{
+//			pthread_mutex_lock(&(obj->serverMutex));
+////			std::cout << "Unlock condition" << std::endl;
+//			pthread_cond_signal(&(obj->hasImgCond));
+//			pthread_mutex_unlock(&(obj->serverMutex));
+//		}
+//		else
+//		{
+//			pthread_mutex_lock(&(obj->serverMutex));
+//			pthread_cond_signal(&(obj->noImgCond));
+//			pthread_mutex_unlock(&(obj->serverMutex));
+//		}
+
+		usleep(1);
+	}
 }
 
 void ServerThread::setDebugPrint(bool debug)

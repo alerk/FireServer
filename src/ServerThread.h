@@ -15,8 +15,9 @@ public:
 	virtual ~ServerThread();
 //private:
 	pthread_t 		serverThread;
+	pthread_t 		monitorServerThread;
 	pthread_mutex_t serverMutex;
-	pthread_cond_t 	serverCond;
+	pthread_cond_t 	hasImgCond, noImgCond;
 
 	unsigned char hasFire, hasIntruder;
 
@@ -36,6 +37,8 @@ public:
 	static void handleFireDetected(void* arg, int source);
 	static void handleIntruderDetected(void* arg, int source);
 	static void handleVideoReady(void* arg, unsigned char* buffer);
+
+	static void* monitor(void* arg);
 
 	void sendAlarm(int type);
 

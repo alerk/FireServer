@@ -18,7 +18,7 @@
 #define MSG_TYPE_INTRUDER	1
 #define MSG_TYPE_VIDEO		2
 
-#define MSG_BUFFER_SIZE 928347
+#define MSG_BUFFER_SIZE (640*480*3+4)
 
 
 
