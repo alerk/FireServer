@@ -47,12 +47,15 @@ static int fire_instant_counter = 0;
 	FireDetector* objFireDetector;
 	cv::VideoCapture capture_;
 	std::vector<FireDetector*> vectorDetector;
-	const int unsigned GAP = 10;
+	const int unsigned GAP = 0;
 	const int unsigned SIZE_1 = 360;
 	const int unsigned SIZE_2 = 320;
 	const int unsigned SIZE_3 = 280;
 
 	unsigned char* s[MAX_CAM_DISPLAY];
+
+	cv::Mat sendFrame((320)*2, (240)*2, CV_8UC3, 3);
+	//unsigned char* s1[MAX_CAM_DISPLAY];
 
 #else
 static CvCapture* capture;
@@ -77,10 +80,9 @@ void* FireThread::runDisplayThread(void* arg)
 {
 	FireThread* fireObj = (FireThread*)arg;
 	int num_of_display = (num_of_source>MAX_CAM_DISPLAY)?MAX_CAM_DISPLAY:num_of_source;
-	namedWindow("Display window", WINDOW_AUTOSIZE);
+//	namedWindow("Display window", WINDOW_AUTOSIZE);
 	while(true)
 	{
-#ifdef SINGLE_PROCESS
 		switch(num_of_display)
 		{
 		case 1:
@@ -90,15 +92,20 @@ void* FireThread::runDisplayThread(void* arg)
 			fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1]);
 			break;
 		case 3:
-			fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1], s[2]);
+//			fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1], s[2]);
+			fireObj->combineImages(640, 480, num_of_display, s[0], s[1], s[2]);
 			break;
 		case 4:
-			fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1], s[2], s[3]);
+//			fireObj->cvShowManyImages("Display window", 640, 480, num_of_display, s[0], s[1], s[2], s[3]);
+			fireObj->combineImages(640, 480, num_of_display, s[0], s[1], s[2], s[3]);
 			break;
 		default:
 			break;
 		}
-#endif
+
+		(fireObj->videoReady)(fireObj->handler, sendFrame.data);
+//		cv::imshow("Display window", sendFrame);
+
 		usleep(DELAY_TIME*1000);
 	}
 	return NULL;
@@ -157,12 +164,8 @@ void* FireThread::runFireThread(void* arg)
 			FireDetector* temp = vectorDetector.at(id);
 			if(temp->isFire)
 			{
-#ifdef SINGLE_PROCESS
+
 				(fireObj->fireDetected)(fireObj->handler, temp->getSourceId());
-#else
-				MessageBuilder::buildMessage(MSG_TYPE_FIREALARM, &(fireObj->msg_buffer[0]), 1,  temp->getSourceId());
-				(fireObj->fireDetected)(fireObj->handler, &(fireObj->msg_buffer[0]));
-#endif
 				temp->isFire = false;
 			}
 		}
@@ -541,12 +544,10 @@ void FireThread::initFireThread()
 		std::string source = iniparser_getstring(ini,temp_src,"Resources/usnMR6I_EAQ.mp4");
 		int threshold = iniparser_getint(ini, temp_threshold, 10);
 		FireDetector* fireDet = new FireDetector(i, temp, source, threshold);
-#ifdef SINGLE_PROCESS
 		if(i<num_of_source && i<MAX_CAM_DISPLAY)
 		{
 			fireDet->setBuffer(s[i]);
 		}
-#endif
 		fireDet->init();
 		vectorDetector.push_back(fireDet);
 	}
@@ -693,6 +694,106 @@ void FireThread::cvShowManyImages(std::string title, int s_cols, int s_rows, int
 	va_end(args);
 }
 
+
+void FireThread::connectCallbackVideo(CallbackVideo cb, void* cbHandler) {
+	videoReady = cb;
+	handler = cbHandler;
+}
+
 void FireThread::setDebugPrint(bool debug) {
 	debug_fire = debug;
+}
+
+void FireThread::combineImages(int s_cols, int s_rows, int nArgs, ...) {
+	// img - Used for getting the arguments
+	cv::Mat img;
+
+	// [[disp_image]] - the image in which input images are to be copied
+	cv::Mat disp_image;
+
+	unsigned int size;
+	unsigned int i;
+	unsigned int m, n;
+	unsigned int x, y;
+
+	// w - Maximum number of images in a row
+	// h - Maximum number of images in a column
+	int w, h;
+
+	// scale - How much we have to resize the image
+	float scale;
+	int max;
+
+	// If the number of arguments is lesser than 0 or greater than 12
+	// return without displaying
+	if(nArgs <= 0)
+	{
+		std::cout << "Number of arguments too small...." << std::endl;
+		return;
+	}
+	else if(nArgs > 12)
+	{
+		std::cout << "Number of arguments too large...." << std::endl;
+		return;
+	}
+	// Determine the size of the image,
+	// and the number of rows/cols
+	// from number of arguments
+	else
+	{
+		w = 2; h = 2;
+		size = SIZE_2;
+	}
+
+	// Create a new 3 channel image
+	disp_image = cv::Mat(cv::Size((w+1)*GAP+size*w, (h+1)*GAP+size*s_rows*h/s_cols), CV_8UC3, 3);
+
+	// Used to get the arguments passed
+	va_list args;
+	va_start(args, nArgs);
+
+	// Loop for nArgs number of arguments
+	for (i = 0, m = GAP, n = GAP; i < nArgs; i++, m += (GAP + size))
+	{
+		// Get the Pointer to the IplImage
+		unsigned char* temp = va_arg(args, unsigned char*);
+
+		// Check whether it is NULL or not
+		// If it is NULL, release the image, and return
+		img = cv::Mat( s_rows, s_cols, CV_8UC3, temp);
+		if(img.empty())
+		{
+			std::cout << "Invalid arguments" << std::endl;
+			return;
+		}
+
+		// Find the width and height of the image
+		x = img.cols;
+		y = img.rows;
+
+		// Find whether height or width is greater in order to resize the image
+		max = (x > y)? x: y;
+
+		// Find the scaling factor to resize the image
+		scale = (float) ( (float) max / size );
+
+		// Used to Align the images
+		if( i % w == 0 && m!= GAP)
+		{
+			m = GAP;
+			n+= (GAP + size*s_rows/s_cols);
+		}
+
+		// Set the image ROI to display the current image
+		cv::Rect roi(m, n, (int)(x/scale), (int)( y/scale ));
+		cv::Mat image_roi = disp_image(roi);
+
+		// Resize the input image and copy the it to the Single Big Image
+		cv::resize(img, img, cv::Size((int)(x/scale), (int)( y/scale )));
+		img.copyTo(image_roi);
+
+		// Reset the ROI in order to display the next image
+	}
+	disp_image.copyTo(sendFrame); //output: copy to sendFrame
+//	imshow("Display window", sendFrame);
 }

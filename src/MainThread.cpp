@@ -8,7 +8,8 @@
 #include "MainThread.h"
 #include <iostream>
 #include <unistd.h>
-#include <tr1/functional>
+
+#include "ini_parser/iniparser.h"
 
 #include "ini_parser/iniparser.h"
 
@@ -23,7 +24,9 @@ MainThread::~MainThread() {
 	// TODO Auto-generated destructor stub
 	delete(fireObj);
 	delete(serverObj);
+#if INTRUDER_EMULATOR
 	delete(intruderObj);
+#endif
 	pthread_cancel(mainThread);
 }
 
@@ -34,7 +37,9 @@ void MainThread::startMainThread() {
 	}
 	fireObj->startFireThread();
 	serverObj->startServerThread();
+#if INTRUDER_EMULATOR
 	intruderObj->startIntruderThread();
+#endif
 }
 
 void MainThread::initMainThread() {
@@ -57,20 +62,18 @@ void MainThread::initMainThread() {
 	serverObj = new ServerThread();
 	serverObj->initServerThread();
 	serverObj->setDebugPrint(debug_print);
-
+#if INTRUDER_EMULATOR
 	intruderObj = new IntruderThread();
 	intruderObj->initIntruderThread();
 	intruderObj->setDebugPrint(debug_print);
-
-
+#endif
 
 	//assign callback from fireObj to serverObj
-#ifdef SINGLE_PROCESS
+
 	fireObj->connectCallback(ServerThread::handleFireDetected, serverObj);
+	fireObj->connectCallbackVideo(ServerThread::handleVideoReady, serverObj);
+#if INTRUDER_EMULATOR
 	intruderObj->connectCallback(ServerThread::handleIntruderDetected, serverObj);
-#else
-	fireObj->connectCallback(ServerThread::handleSendData, serverObj);
-	fireObj->connectCallback(ServerThread::handleSendData, serverObj);
 #endif
 
 	std::cout << "[Main Thread]Init" << std::endl;

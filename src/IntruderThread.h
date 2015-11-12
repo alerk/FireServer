@@ -10,11 +10,9 @@
 
 #include "CommonDefine.h"
 
-#ifdef SINGLE_PROCESS
+
 typedef void (*CallbackPtr)(void*, int);
-#else
-typedef void (*CallbackPtr)(void*, unsigned char*);
-#endif
+
 class IntruderThread {
 public:
 	IntruderThread();
@@ -29,7 +27,6 @@ public:
 	void 			joinIntruderThread();
 	CallbackPtr 	intruderDetected;
 	void*			handler;//Actual object that handles the call
-	unsigned char msg_buffer[SOCKET_BUFFER_SIZE];
 	void 			connectCallback(CallbackPtr cb, void* cbHandler);
 	void 			setDebugPrint(bool debug);
 };

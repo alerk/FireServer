@@ -14,7 +14,7 @@
  *
  */
 
-#ifdef SINGLE_PROCESS
+
 #include "ServerThread.h"
 #include "Socket/ServerSocket.h"
 #include "Socket/SocketException.h"
@@ -27,14 +27,16 @@
 #include "ini_parser/iniparser.h"
 #include "CommonDefine.h"
 #define SERVER_PORT 13579
+
 static void* run(void* arg);
 
 
 static unsigned char counter = 0;
 static int server_port = 0;
-static queue<unsigned char*> sendBuffer;
 
 using namespace std;
+unsigned char sendBuffer[MSG_BUFFER_SIZE];
+unsigned char hasBuffer = 0;
 
 ServerThread::ServerThread() {
 	// TODO Auto-generated constructor stub
@@ -53,6 +55,10 @@ void ServerThread::startServerThread() {
 	{
 		std::cout << "Fail to create serverThread" << std::endl;
 	}
+//	if( pthread_create(&monitorServerThread,NULL,ServerThread::monitor,(void*)this)!=0)
+//		{
+//			std::cout << "Fail to create monitorServerThread" << std::endl;
+//		}
 	std::cout << "[ServerThread]Start" << std::endl;
 }
 
@@ -65,7 +71,7 @@ void ServerThread::initServerThread() {
 		fprintf(stderr, "[serverThread]cannot parse file\n");
 		return;
 	}
-	server_port = iniparser_getint(ini, "server_thread:port",12345);
+	server_port = iniparser_getint(ini, "server_thread:port",13579);
 	iniparser_freedict(ini);
 	std::cout << "[ServerThread]Init" << std::endl;
 }
@@ -75,6 +81,63 @@ void ServerThread::joinServerThread() {
 }
 
 static void* run(void* arg)
+{
+	ServerThread* obj = (ServerThread*)arg;
+	try{
+
+		ServerSocket listenServer(server_port);
+		while(true)
+		{
+			ServerSocket sendToSocket;
+			cout << "Waiting for client!" << endl;
+			listenServer.accept(sendToSocket);
+			cout << "Client connected!" << endl;
+			while(true)
+			{
+				try{
+//					cout << "Inside loop!" << endl;
+//					pthread_mutex_trylock(&(obj->serverMutex));
+//					while(hasBuffer<=0)
+//					{
+////						std::cout << "Under lock server" << std::endl;
+////						pthread_cond_wait(&(obj->hasImgCond), &(obj->serverMutex));
+//					}
+					if(hasBuffer>0)
+					{
+
+//					std::cout << "Prepare to send" << std::endl;
+					int sendSize = sendToSocket.send( (char*)sendBuffer, sizeof(sendBuffer));
+					hasBuffer--;
+//					pthread_mutex_unlock(&(obj->serverMutex));
+					if(sendSize<0)
+					{
+						cout << "Client disconnected" << endl;
+						break;
+					}
+					else
+					{
+//						cout << "Send to client " << sendSize << " bytes" << endl;
+					}
+					}
+					usleep(1);
+				}
+				catch(SocketException& e)
+				{
+					std::cout << "Error while accepting client " << e.description() << std::endl;
+					break;
+				}
+			}
+			sleep(2);
+		}
+	}
+	catch(SocketException& e)
+	{
+		std::cout << "Error while creating server " << e.description() << std::endl;
+	}
+	return NULL;
+}
+
+static void* __run(void* arg)
 {
 	ServerThread* obj = (ServerThread*)arg;
 	try{
@@ -144,8 +207,6 @@ static void* run(void* arg)
 		std::cout << "Error while creating server " << e.description() << std::endl;
 	}
 	return NULL;
-
-
 }
 
 void ServerThread::sendAlarm(int type) {
@@ -183,6 +244,25 @@ void ServerThread::handleFireDetected(void* arg, int source)
 
 }
 
+void ServerThread::handleVideoReady(void* arg, unsigned char* buffer)
+{
+	ServerThread* objServer = (ServerThread*)arg;
+//	pthread_mutex_trylock(&(objServer->serverMutex));
+//	while(hasBuffer)
+//	{
+//		pthread_cond_wait(&(objServer->noImgCond),&(objServer->serverMutex));
+//	}
+//	std::cout << "Has image to send" << std::endl;
+	hasBuffer++;
+	sendBuffer[0] = 0xff;
+	sendBuffer[1] = 0xff;
+	sendBuffer[2] = 0xaa;
+	sendBuffer[3] = 0x55;
+	memcpy(&(sendBuffer[4]), buffer, MSG_BUFFER_SIZE-4);
+
+//	pthread_mutex_unlock(&(objServer->serverMutex));
+}
+
 void ServerThread::handleIntruderDetected(void* arg, int source)
 {
 	ServerThread* objServer = (ServerThread*)arg;
@@ -191,185 +271,30 @@ void ServerThread::handleIntruderDetected(void* arg, int source)
 }
 
 
-#else
-
-#include "ServerThread.h"
-#include "Socket/ServerSocket.h"
-#include "Socket/SocketException.h"
-#include <iostream>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
-#include <queue>
-
-#include "ini_parser/iniparser.h"
-#include "CommonDefine.h"
-#include "Util/MessageBuilder.h"
-
-
-using namespace std;
-#define SERVER_PORT 13579
-
-static unsigned char network_buffer[SOCKET_BUFFER_SIZE];
-static int server_port = 0;
-const unsigned int MAX_BUFFER_SIZE = 300;
-
-
-ServerThread::ServerThread() {
-	// TODO Auto-generated constructor stub
-//	initServerThread();
-	debug_server = false;
-}
-
-ServerThread::~ServerThread() {
-	// TODO Auto-generated destructor stub
-	pthread_cancel(serverThread);
-}
-
-void ServerThread::startServerThread() {
-	if( pthread_create(&serverThread,NULL,ServerThread::run,(void*)this)!=0)
-	{
-		std::cout << "Fail to create serverThread" << std::endl;
-	}
-	std::cout << "[ServerThread]Start" << std::endl;
-
-	if( pthread_create(&monitorThread,NULL,ServerThread::monitor,(void*)this)!=0)
-		{
-			std::cout << "Fail to create monitorThread" << std::endl;
-		}
-		std::cout << "[MonitorThread]Start" << std::endl;
-}
-
-void ServerThread::initServerThread() {
-	dictionary* ini;
-	std::string src_str;
-	ini = iniparser_load("Resources/FireServer.conf");
-	if(ini==NULL)
-	{
-		fprintf(stderr, "[serverThread]cannot parse file\n");
-		return;
-	}
-	server_port = iniparser_getint(ini, "server_thread:port",12345);
-	iniparser_freedict(ini);
-	isLockedRead = isLockedWrite = false;
-	std::cout << "[ServerThread]Init" << std::endl;
-}
-
-void ServerThread::joinServerThread() {
-	pthread_join(serverThread, NULL);
-}
-
-void ServerThread::handleSendData(void* arg, unsigned char* buffer)
-{
-	ServerThread* objServer = (ServerThread*)arg;
-	objServer->enqueueMessage(buffer);
-}
-
 void* ServerThread::monitor(void* arg)
 {
 	ServerThread* obj = (ServerThread*)arg;
 	while(true)
 	{
-		obj->checkQueueStatus();
-		sleep(1);
-	}
-	return NULL;
-}
+//		pthread_mutex_lock(&(obj->serverMutex));
+//		if(hasBuffer)
+//		{
+//			pthread_mutex_lock(&(obj->serverMutex));
+////			std::cout << "Unlock condition" << std::endl;
+//			pthread_cond_signal(&(obj->hasImgCond));
+//			pthread_mutex_unlock(&(obj->serverMutex));
+//		}
+//		else
+//		{
+//			pthread_mutex_lock(&(obj->serverMutex));
+//			pthread_cond_signal(&(obj->noImgCond));
+//			pthread_mutex_unlock(&(obj->serverMutex));
+//		}
 
-void* ServerThread::run(void* arg)
-{
-	ServerThread* obj = (ServerThread*)arg;
-	try
-	{
-		ServerSocket listenServer(server_port);
-		while(true)
-		{
-			ServerSocket sendToSocket;
-			cout << "Waiting for client!" << endl;
-			listenServer.accept(sendToSocket);
-			cout << "Client connected!" << endl;
-			while(true)
-			{
-				try
-				{
-					obj->dequeueMessage(&(network_buffer[0]));
-					int sentSize = sendToSocket.send( (const char*)(&(network_buffer[0])), SOCKET_BUFFER_SIZE);
-					if(sentSize<0)
-					{
-						cout << "Client disconnected" << endl;
-						break;
-					}
-					else
-					{
-						cout << "Client sent: "<< sentSize << endl;
-					}
-				}
-				catch(SocketException& e)
-				{
-					std::cout << "Error while accepting client " << e.description() << std::endl;
-				}
-			}
-		}
-	}
-	catch(SocketException& e)
-	{
-		std::cout << "Error while creating server " << e.description() << std::endl;
-	}
-	return NULL;
-
-
-}
-
-void ServerThread::enqueueMessage(unsigned char* buffer)
-{
-	pthread_mutex_lock(&serverMutex);
-	while(isBufferFull())
-	{
-		isLockedWrite = true;
-		pthread_cond_wait(&bufferFull, &serverMutex);
-	}
-	unsigned char* new_buffer = (unsigned char*)malloc(SOCKET_BUFFER_SIZE*sizeof(unsigned char));
-	memcpy(new_buffer, buffer, SOCKET_BUFFER_SIZE*sizeof(unsigned char));
-	this->messageBuffer.push(new_buffer);
-	pthread_mutex_unlock(&serverMutex);
-}
-
-void ServerThread::dequeueMessage(unsigned char* buffer)
-{
-	pthread_mutex_lock(&serverMutex);
-	while(!isBufferEmpty())
-	{
-		isLockedRead = true;
-		pthread_cond_wait(&bufferEmpty, &serverMutex);
-	}
-	unsigned char* temp_buffer = messageBuffer.front();
-	memcpy(buffer, temp_buffer, SOCKET_BUFFER_SIZE*sizeof(unsigned char));
-	free(temp_buffer);
-	messageBuffer.pop();
-	pthread_mutex_unlock(&serverMutex);
-}
-
-void ServerThread::checkQueueStatus() {
-	if(isLockedWrite && !isBufferFull()){
-		pthread_cond_signal(&bufferFull);
-		isLockedWrite = false;
-	}
-	if(isLockedRead && !isBufferEmpty()){
-		pthread_cond_signal(&bufferEmpty);
-		isLockedRead = false;
+		usleep(1);
 	}
 }
 
-bool ServerThread::isBufferEmpty()
-{
-	return (messageBuffer.empty());
-}
-
-bool ServerThread::isBufferFull()
-{
-	return (messageBuffer.size() >= MAX_BUFFER_SIZE);
-}
-#endif
 void ServerThread::setDebugPrint(bool debug)
 {
 	debug_server = debug;

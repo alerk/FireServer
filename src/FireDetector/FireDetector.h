@@ -20,15 +20,12 @@
 
 #include "../DisplayThread.h"
 
-typedef void (*CallbackPtr)(void*, unsigned char*);
-
 using namespace cv;
 class FireDetector {
 public:
 	FireDetector(int id, std::string name, std::string input, int threshold);
 	virtual ~FireDetector();
-	int getFirePixelNumber(Mat input);
-	int getFirePixelNumber(BackgroundSubtractorMOG2 bg, Mat frame, Mat back, Mat front);
+	int getFirePixelNumber(Mat& input);
 
 
 	int getSourceId() const;
@@ -45,7 +42,7 @@ public:
 	int getFrame(unsigned char* buff);
 
 	void setFrame(const Mat& frame);
-	void connectCallback(CallbackPtr cb, void* cbHandler);
+
 
 	bool isHasNewImage() const;
 	void setHasNewImage(bool hasNewImage);
@@ -59,9 +56,6 @@ public:
 	pthread_mutex_t runMutex;
 	pthread_cond_t 	runCond;
 
-	//callback function variables
-	CallbackPtr 	videoCaptured;
-	void*			handler;
 private:
 	int sourceId;
 	std::string sourceName;

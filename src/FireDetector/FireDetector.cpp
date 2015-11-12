@@ -20,7 +20,7 @@
 //void* run(void* arg);
 
 std::queue<unsigned char*> frameQueue;
-static unsigned char msg_buffer[SOCKET_BUFFER_SIZE];
+//static unsigned char msg_buffer[SOCKET_BUFFER_SIZE];
 
 static int detector_instant = 0;
 const int GAP = 10;
@@ -38,7 +38,7 @@ FireDetector::FireDetector(int id, std::string name, std::string input, int thre
 	char wName[25];
 	sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
 	std::cout << wName << std::endl;
-	//namedWindow(wName);
+//	namedWindow(wName);
 	imgWidth = imgHeight = -1;
 
 	detector_instant++;
@@ -51,12 +51,15 @@ FireDetector::~FireDetector()
 	// TODO Auto-generated destructor stub
 }
 
-int FireDetector::getFirePixelNumber(Mat aFrame) {
+int FireDetector::getFirePixelNumber(Mat& aFrame)
+{
+
 	const int ROI_WIDTH = 40;
 	const int ROI_HEIGHT = 30;
 	unsigned int currentWidth = 0, currentHeight = 0;
 	Rect roi;
 	unsigned int width, height;
+
 	std::vector<std::vector<cv::Point> > contours;
 
 	Mat YCrCbFrame;
@@ -132,33 +135,33 @@ int FireDetector::getFirePixelNumber(Mat aFrame) {
 	bitwise_and(colorMask, Cr_Cb, colorMask);
 
 	for(currentWidth = 0; currentWidth < width; currentWidth+=ROI_WIDTH)
-	    {
-	        for(currentHeight = 0; currentHeight < height; currentHeight+=ROI_HEIGHT)
-	        {
-	            roi = Rect(currentWidth, currentHeight, ROI_WIDTH, ROI_HEIGHT);
-	            cv::Mat testArea = colorMask(roi);
-	            int fireCount = countNonZero(testArea);
-	            if(fireCount > 10)
-	            {
-	                cv::Mat roi_draw = aFrame(roi);
-	                cv::Mat color(roi_draw.size(), CV_8UC3, cv::Scalar (0,125,125));
-	                double alpha = 0.5;
-	                cv::addWeighted(color, alpha, roi_draw, 1.0-alpha, 0.0, roi_draw);
-	            }
-	        }
-	    }
 
+	{
+		for(currentHeight = 0; currentHeight < height; currentHeight+=ROI_HEIGHT)
+		{
+			roi = Rect(currentWidth, currentHeight, ROI_WIDTH, ROI_HEIGHT);
+			cv::Mat testArea = colorMask(roi);
+			int fireCount = countNonZero(testArea);
+			if(fireCount > 10)
+			{
+				cv::Mat roi_draw = aFrame(roi);
+				cv::Mat color(roi_draw.size(), CV_8UC3, cv::Scalar (0,125,125));
+				double alpha = 0.8;
+				cv::addWeighted(color, alpha, roi_draw, 1.0-alpha, 0.0, roi_draw);
+			}
+		}
+	}
 	int fireCount = countNonZero(colorMask);
 
-	cvtColor(front, front, CV_GRAY2BGR);
-	cvtColor(Y_Cb, Y_Cb, CV_GRAY2BGR);
-	cvtColor(Cr_Cb, Cr_Cb, CV_GRAY2BGR);
-	cvtColor(colorMask, colorMask, CV_GRAY2BGR);
+	//cvtColor(front, front, CV_GRAY2BGR);
+	//cvtColor(Y_Cb, Y_Cb, CV_GRAY2BGR);
+	//cvtColor(Cr_Cb, Cr_Cb, CV_GRAY2BGR);
+	//cvtColor(colorMask, colorMask, CV_GRAY2BGR);
 
 	char wName[25];
 	sprintf(&(wName[0]),"Frames_%s", sourceName.c_str());
 //	cvShowManyImages(wName, frame.cols, frame.rows, 5, (unsigned char*)frame.data, (unsigned char*)front.data, (unsigned char*)Y_Cb.data, (unsigned char*)Cr_Cb.data, (unsigned char*)colorMask.data);
-//	imshow(wName, frame);
+//	imshow(wName, aFrame);
 	if(fireCount>fireThreshold)
 	{
 		//count the frame that contains firePixel surpass threshold
@@ -223,15 +226,19 @@ void* FireDetector::run(void* arg)
 			continue;
 		}
 		cv::resize(tempFrame, aFrame, cv::Size(640,480), 0, 0, cv::INTER_CUBIC);
-#ifdef SINGLE_PROCESS
-		obj->setFrame(aFrame);
-#else
-		cv::resize(tempFrame, sendFrame, cv::Size(320,240), 0, 0, cv::INTER_CUBIC);
-		MessageBuilder::buildMessage(MSG_TYPE_VIDEO, msg_buffer, 8, obj->getSourceId(),320, 240, 3, 1, 1, 320*240*3, sendFrame.data);
-		(obj->videoCaptured)(obj->handler, &(msg_buffer[0]));
-#endif
+
+		//pthread_mutex_lock(&obj->runMutex);
+//		if(!obj->has_new_image)
+//		{
+//			obj->has_new_image = true;
+//		}
+
+		//pthread_mutex_unlock(&obj->runMutex);
+
 //		int start_s=clock();
 		int firePixel = obj->getFirePixelNumber(aFrame);
+		obj->setFrame(aFrame);
+//		int firePixel = obj->getFirePixelNumber(bg, aFrame, back, front);
 
 		if(firePixel>obj->getFireThreshold())
 		{
@@ -286,12 +293,6 @@ void FireDetector::join()
 #if DUAL_THREAD
 	pthread_join(captureThread, NULL);
 #endif
-}
-
-void FireDetector::connectCallback(CallbackPtr cb, void* cbHandler)
-{
-	videoCaptured = cb;
-	handler = cbHandler;
 }
 
 int FireDetector::getFrame(unsigned char* buff)
